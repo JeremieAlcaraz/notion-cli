@@ -45,7 +45,7 @@ brews:
   - repository:
       owner: 4ier
       name: homebrew-tap
-      token: "{{ .Env.GITHUB_TOKEN }}"
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     homepage: "https://github.com/4ier/notion-cli"
     description: "Full-featured CLI for Notion. Like gh for GitHub, but for Notion."
 
@@ -53,7 +53,7 @@ scoops:
   - repository:
       owner: 4ier
       name: scoop-bucket
-      token: "{{ .Env.GITHUB_TOKEN }}"
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     homepage: "https://github.com/4ier/notion-cli"
     description: "Full-featured CLI for Notion. Like gh for GitHub, but for Notion."
     license: "MIT"
