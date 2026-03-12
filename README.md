@@ -180,6 +180,27 @@ notion auth status
 notion auth doctor
 ```
 
+## Troubleshooting
+
+### Windows: MSYS / Git Bash path mangling
+
+In MSYS-based shells (Git Bash, MSYS2), arguments starting with `/` are silently rewritten to Windows paths. This breaks API path arguments:
+
+```sh
+# ✗ /v1/users/me becomes C:/Program Files/Git/v1/users/me
+notion api GET /v1/users/me
+```
+
+**Fix:** disable MSYS path conversion:
+
+```sh
+MSYS_NO_PATHCONV=1 notion api GET /v1/users/me
+```
+
+Or export it for the session: `export MSYS_NO_PATHCONV=1`
+
+> This is a shell-level issue, not a bug in notion-cli. PowerShell and cmd.exe are not affected.
+
 ## Contributing
 
 Issues and PRs welcome at [github.com/4ier/notion-cli](https://github.com/4ier/notion-cli).
