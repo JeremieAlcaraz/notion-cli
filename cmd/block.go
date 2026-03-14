@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/4ier/notion-cli/internal/client"
@@ -786,6 +787,29 @@ func parseMarkdownToBlocks(content string) []map[string]interface{} {
 			continue
 		}
 
+		// GFM Table: starts with '|'
+		if strings.HasPrefix(strings.TrimSpace(line), "|") {
+			// Collect all consecutive pipe-starting lines
+			var tableLines []string
+			for i < len(lines) && strings.HasPrefix(strings.TrimSpace(lines[i]), "|") {
+				tableLines = append(tableLines, lines[i])
+				i++
+			}
+			// Need at least header + separator + 1 data row to be a valid GFM table
+			if len(tableLines) >= 2 && isTableSeparator(tableLines[1]) {
+				tableBlock := buildTableBlock(tableLines)
+				if tableBlock != nil {
+					blocks = append(blocks, tableBlock)
+					continue
+				}
+			}
+			// Not a valid table — treat each line as a paragraph
+			for _, tl := range tableLines {
+				blocks = append(blocks, makeTextBlock("paragraph", tl))
+			}
+			continue
+		}
+
 		// Default: paragraph
 		blocks = append(blocks, makeTextBlock("paragraph", line))
 		i++
@@ -794,16 +818,254 @@ func parseMarkdownToBlocks(content string) []map[string]interface{} {
 	return blocks
 }
 
+// isTableSeparator returns true when a line looks like a GFM table separator (|---|---|).
+func isTableSeparator(line string) bool {
+	trimmed := strings.TrimSpace(line)
+	if !strings.HasPrefix(trimmed, "|") {
+		return false
+	}
+	// Strip leading/trailing '|', split cells, check each cell is only -/:/space
+	inner := strings.Trim(trimmed, "|")
+	cells := strings.Split(inner, "|")
+	for _, cell := range cells {
+		cell = strings.TrimSpace(cell)
+		if cell == "" {
+			continue
+		}
+		// Must consist of dashes and optional colons (alignment markers)
+		for _, ch := range cell {
+			if ch != '-' && ch != ':' {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// splitTableRow splits a pipe-delimited table row into trimmed cell strings.
+func splitTableRow(line string) []string {
+	trimmed := strings.TrimSpace(line)
+	// Strip leading/trailing '|'
+	trimmed = strings.Trim(trimmed, "|")
+	parts := strings.Split(trimmed, "|")
+	cells := make([]string, len(parts))
+	for i, p := range parts {
+		cells[i] = strings.TrimSpace(p)
+	}
+	return cells
+}
+
+// buildTableBlock converts collected GFM table lines into a Notion table block.
+// tableLines[0] = header row, tableLines[1] = separator, tableLines[2:] = data rows.
+func buildTableBlock(tableLines []string) map[string]interface{} {
+	headerCells := splitTableRow(tableLines[0])
+	tableWidth := len(headerCells)
+	if tableWidth == 0 {
+		return nil
+	}
+
+	var rows []map[string]interface{}
+
+	// Header row (index 0), skip separator (index 1), then data rows
+	for idx, line := range tableLines {
+		if idx == 1 {
+			continue // separator — skip
+		}
+		cells := splitTableRow(line)
+		// Pad or trim to tableWidth
+		for len(cells) < tableWidth {
+			cells = append(cells, "")
+		}
+		cells = cells[:tableWidth]
+
+		notionCells := make([]interface{}, tableWidth)
+		for j, cellText := range cells {
+			notionCells[j] = parseInlineFormatting(cellText)
+		}
+		rows = append(rows, map[string]interface{}{
+			"object": "block",
+			"type":   "table_row",
+			"table_row": map[string]interface{}{
+				"cells": notionCells,
+			},
+		})
+	}
+
+	if len(rows) == 0 {
+		return nil
+	}
+
+	return map[string]interface{}{
+		"object": "block",
+		"type":   "table",
+		"table": map[string]interface{}{
+			"table_width":      tableWidth,
+			"has_column_header": true,
+			"has_row_header":   false,
+		},
+		"children": rows,
+	}
+}
+
 func makeTextBlock(blockType, text string) map[string]interface{} {
 	return map[string]interface{}{
 		"object": "block",
 		"type":   blockType,
 		blockType: map[string]interface{}{
-			"rich_text": []map[string]interface{}{
-				{"text": map[string]interface{}{"content": strings.TrimSpace(text)}},
-			},
+			"rich_text": parseInlineFormatting(strings.TrimSpace(text)),
 		},
 	}
+}
+
+// parseInlineFormatting converts inline markdown (bold, italic, code, link, strikethrough)
+// into a Notion rich_text array.
+func parseInlineFormatting(text string) []map[string]interface{} {
+	// token pattern: **bold**, *italic*, _italic_, `code`, ~~strike~~, [text](url)
+	tokenRe := regexp.MustCompile(`\*\*(.+?)\*\*|\*(.+?)\*|_(.+?)_|` + "`" + `(.+?)` + "`" + `|~~(.+?)~~|\[([^\]]+)\]\(([^)]+)\)`)
+
+	var result []map[string]interface{}
+	remaining := text
+	for len(remaining) > 0 {
+		loc := tokenRe.FindStringIndex(remaining)
+		if loc == nil {
+			// No more tokens — append remaining as plain text
+			if remaining != "" {
+				result = append(result, plainRichText(remaining))
+			}
+			break
+		}
+		// Plain text before the match
+		if loc[0] > 0 {
+			result = append(result, plainRichText(remaining[:loc[0]]))
+		}
+		match := tokenRe.FindStringSubmatch(remaining[loc[0]:loc[1]])
+		rt := buildAnnotatedRichText(match)
+		result = append(result, rt)
+		remaining = remaining[loc[1]:]
+	}
+	if len(result) == 0 {
+		return []map[string]interface{}{plainRichText(text)}
+	}
+	return result
+}
+
+func plainRichText(text string) map[string]interface{} {
+	return map[string]interface{}{
+		"text": map[string]interface{}{"content": text},
+	}
+}
+
+func buildAnnotatedRichText(match []string) map[string]interface{} {
+	// match[0] = full match
+	// match[1] = **bold**  content
+	// match[2] = *italic*  content
+	// match[3] = _italic_  content
+	// match[4] = `code`    content
+	// match[5] = ~~strike~~ content
+	// match[6] = [text](url) text part
+	// match[7] = [text](url) url part
+	switch {
+	case match[1] != "": // **bold**
+		return map[string]interface{}{
+			"text":        map[string]interface{}{"content": match[1]},
+			"annotations": map[string]interface{}{"bold": true},
+		}
+	case match[2] != "": // *italic*
+		return map[string]interface{}{
+			"text":        map[string]interface{}{"content": match[2]},
+			"annotations": map[string]interface{}{"italic": true},
+		}
+	case match[3] != "": // _italic_
+		return map[string]interface{}{
+			"text":        map[string]interface{}{"content": match[3]},
+			"annotations": map[string]interface{}{"italic": true},
+		}
+	case match[4] != "": // `code`
+		return map[string]interface{}{
+			"text":        map[string]interface{}{"content": match[4]},
+			"annotations": map[string]interface{}{"code": true},
+		}
+	case match[5] != "": // ~~strike~~
+		return map[string]interface{}{
+			"text":        map[string]interface{}{"content": match[5]},
+			"annotations": map[string]interface{}{"strikethrough": true},
+		}
+	case match[6] != "": // [text](url)
+		return map[string]interface{}{
+			"text": map[string]interface{}{
+				"content": match[6],
+				"link":    map[string]interface{}{"url": match[7]},
+			},
+		}
+	default:
+		return plainRichText(match[0])
+	}
+}
+
+// richTextToMarkdown converts a Notion rich_text cell ([]interface{} of rich_text objects)
+// into a plain markdown string, applying inline annotations.
+func richTextToMarkdown(cell interface{}) string {
+	items, ok := cell.([]interface{})
+	if !ok {
+		// Could be []map[string]interface{} from our own buildTableBlock
+		if maps, ok := cell.([]map[string]interface{}); ok {
+			var sb strings.Builder
+			for _, m := range maps {
+				sb.WriteString(richTextItemToMarkdown(m))
+			}
+			return sb.String()
+		}
+		return ""
+	}
+	var sb strings.Builder
+	for _, item := range items {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		sb.WriteString(richTextItemToMarkdown(m))
+	}
+	return sb.String()
+}
+
+func richTextItemToMarkdown(m map[string]interface{}) string {
+	textObj, _ := m["text"].(map[string]interface{})
+	content, _ := textObj["content"].(string)
+	link, hasLink := textObj["link"].(map[string]interface{})
+
+	ann, _ := m["annotations"].(map[string]interface{})
+	bold, _ := ann["bold"].(bool)
+	italic, _ := ann["italic"].(bool)
+	code, _ := ann["code"].(bool)
+	strike, _ := ann["strikethrough"].(bool)
+
+	// plain_text fallback (from Notion API responses)
+	if content == "" {
+		content, _ = m["plain_text"].(string)
+		// For API responses, check href for links
+		if href, ok := m["href"].(string); ok && href != "" {
+			return fmt.Sprintf("[%s](%s)", content, href)
+		}
+	}
+
+	result := content
+	if code {
+		return "`" + result + "`"
+	}
+	if strike {
+		result = "~~" + result + "~~"
+	}
+	if bold {
+		result = "**" + result + "**"
+	}
+	if italic {
+		result = "*" + result + "*"
+	}
+	if hasLink {
+		url, _ := link["url"].(string)
+		result = fmt.Sprintf("[%s](%s)", result, url)
+	}
+	return result
 }
 
 // renderBlockMarkdown outputs a block as clean Markdown.
@@ -928,6 +1190,44 @@ func renderBlockMarkdown(block map[string]interface{}, indent int) {
 			expr, _ := data["expression"].(string)
 			fmt.Printf("%s$$\n%s%s\n%s$$\n\n", prefix, prefix, expr, prefix)
 		}
+	case "table":
+		// Table is rendered by iterating its _children (table_row blocks)
+		// We reconstruct the GFM table including the separator after header row.
+		tableData, _ := block["table"].(map[string]interface{})
+		hasColHeader, _ := tableData["has_column_header"].(bool)
+		children, _ := block["_children"].([]interface{})
+		for rowIdx, child := range children {
+			rowBlock, ok := child.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			renderBlockMarkdown(rowBlock, indent)
+			// Insert GFM separator after header row
+			if rowIdx == 0 && hasColHeader {
+				width := 0
+				if rowData, ok := rowBlock["table_row"].(map[string]interface{}); ok {
+					if cells, ok := rowData["cells"].([]interface{}); ok {
+						width = len(cells)
+					}
+				}
+				if width > 0 {
+					sep := prefix + "|" + strings.Repeat("---|", width)
+					fmt.Println(sep)
+				}
+			}
+		}
+		fmt.Println()
+		return // children already handled above
+	case "table_row":
+		rowData, _ := block["table_row"].(map[string]interface{})
+		cells, _ := rowData["cells"].([]interface{})
+		var parts []string
+		for _, cell := range cells {
+			cellText := richTextToMarkdown(cell)
+			parts = append(parts, cellText)
+		}
+		fmt.Printf("%s| %s |\n", prefix, strings.Join(parts, " | "))
+		return
 	case "column_list", "synced_block":
 		// Container blocks — just render children
 	default:
