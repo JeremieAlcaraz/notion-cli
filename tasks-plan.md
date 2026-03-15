@@ -106,7 +106,7 @@ notion-cli/
 
 ## Phase 3 — Migration
 
-- [ ] T08 Brancher cmd/generated/ dans root.go
+- [x] T08 Brancher cmd/generated/ dans root.go
   Depends on: T06
   Changes: cmd/root.go
   Benefits: Les commandes générées sont accessibles via le binaire

@@ -40,14 +40,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "Show HTTP request/response details")
 
 	rootCmd.AddCommand(authCmd)
-	rootCmd.AddCommand(searchCmd)
-	rootCmd.AddCommand(pageCmd)
-	rootCmd.AddCommand(dbCmd)
-	rootCmd.AddCommand(blockCmd)
-	rootCmd.AddCommand(userCmd)
 	rootCmd.AddCommand(apiCmd)
-	rootCmd.AddCommand(commentCmd)
-	rootCmd.AddCommand(fileCmd)
 
 	// Generated commands from OpenAPI spec
 	generated.AddTo(rootCmd)
