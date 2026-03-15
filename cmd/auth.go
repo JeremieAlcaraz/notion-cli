@@ -11,6 +11,7 @@ import (
 	"github.com/4ier/notion-cli/internal/config"
 	"github.com/4ier/notion-cli/internal/render"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 var authCmd = &cobra.Command{
@@ -40,14 +41,17 @@ Examples:
 
 		var token string
 		if withToken {
-			// Read from stdin
+			// If stdin is a TTY, show a prompt so the user knows to paste
+			if term.IsTerminal(int(os.Stdin.Fd())) {
+				fmt.Fprint(os.Stderr, "Token: ")
+			}
 			scanner := bufio.NewScanner(os.Stdin)
 			if scanner.Scan() {
 				token = strings.TrimSpace(scanner.Text())
 			}
 		} else {
 			// Interactive prompt
-			fmt.Print("Paste your integration token: ")
+			fmt.Fprint(os.Stderr, "Paste your integration token: ")
 			scanner := bufio.NewScanner(os.Stdin)
 			if scanner.Scan() {
 				token = strings.TrimSpace(scanner.Text())
