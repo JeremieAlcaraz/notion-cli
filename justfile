@@ -22,5 +22,9 @@ build:
 test:
     go test ./...
 
+# Update golden test files after intentional spec/template changes
+update-golden:
+    UPDATE_GOLDEN=1 go test ./gen/... -run TestGolden
+
 # Build + run tests
 check: build test

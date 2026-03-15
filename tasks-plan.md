@@ -60,14 +60,14 @@ notion-cli/
   Tests: go build ./... && grep "2026-03-11" internal/client/client.go
   Commit: fix(client): bump Notion-Version header to 2026-03-11
 
-- [ ] T02 Snapshot la spec OpenAPI dans le repo
+- [x] T02 Snapshot la spec OpenAPI dans le repo
   Depends on: T01
   Changes: spec/notion-openapi.json, justfile (cible update-spec)
   Benefits: Source de vérité versionnée, reproductibilité offline
   Tests: jq '.info.version' spec/notion-openapi.json && just update-spec (doit overwriter sans erreur)
   Commit: chore(spec): add Notion OpenAPI 3.1.0 snapshot + just update-spec
 
-- [ ] T03 Créer le justfile avec les cibles essentielles
+- [x] T03 Créer le justfile avec les cibles essentielles
   Depends on: T02
   Changes: justfile
   Benefits: Interface unique pour generate/build/test/update-spec
@@ -76,21 +76,21 @@ notion-cli/
 
 ## Phase 2 — Générateur
 
-- [ ] T04 Créer le parser OpenAPI (gen/parser.go)
+- [x] T04 Créer le parser OpenAPI (gen/parser.go)
   Depends on: T02
   Changes: gen/parser.go, gen/go.mod si module séparé
   Benefits: Lit la spec et produit une représentation Go des endpoints (méthode, path, params, body, réponses)
   Tests: go test ./gen/... -run TestParser → vérifie qu'on extrait bien N endpoints depuis la spec snapshot
   Commit: feat(gen): add OpenAPI 3.1.0 parser for Notion spec
 
-- [ ] T05 Créer les templates Go (gen/templates/)
+- [x] T05 Créer les templates Go (gen/templates/)
   Depends on: T04
   Changes: gen/templates/command.go.tmpl, client_method.go.tmpl, types.go.tmpl
   Benefits: Chaque endpoint devient une commande Cobra + une méthode client + des structs typés
   Tests: go test ./gen/... -run TestTemplateRender → golden file test sur un endpoint simple (GET /v1/users/me)
   Commit: feat(gen): add cobra command + client + types templates
 
-- [ ] T06 Créer le générateur principal (gen/generate.go)
+- [x] T06 Créer le générateur principal (gen/generate.go)
   Depends on: T05
   Changes: gen/generate.go, cmd/generated/ (premier output)
   Benefits: `go generate ./...` ou `just generate` produit cmd/generated/*.go compilable
