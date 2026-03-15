@@ -14,7 +14,7 @@ import (
 
 const (
 	BaseURL        = "https://api.notion.com"
-	NotionVersion  = "2022-06-28"
+	NotionVersion  = "2026-03-11"
 	DefaultTimeout = 30 * time.Second
 )
 
@@ -293,7 +293,7 @@ func (c *Client) UploadFileContent(uploadID, fileName, contentType string, fileB
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	partHeader := make(textproto.MIMEHeader)
-	partHeader.Set("Content-Disposition", multipart.FileContentDisposition("file", fileName))
+	partHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file"; filename="%s"`, fileName))
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
