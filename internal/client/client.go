@@ -85,7 +85,7 @@ func (c *Client) do(method, path string, body interface{}) ([]byte, error) {
 			Message string `json:"message"`
 		}
 		if json.Unmarshal(respBody, &apiErr) == nil && apiErr.Message != "" {
-			hint := errorHint(apiErr.Code, apiErr.Message)
+			hint := errorHint(apiErr.Code, apiErr.Message, path)
 			if hint != "" {
 				return nil, fmt.Errorf("%s: %s\n  → %s", apiErr.Code, apiErr.Message, hint)
 			}
@@ -345,9 +345,13 @@ func (c *Client) UploadFileContent(uploadID, fileName, contentType string, fileB
 }
 
 // errorHint provides actionable suggestions for common API errors.
-func errorHint(code, message string) string {
+func errorHint(code, message, path string) string {
 	switch code {
 	case "object_not_found":
+		if strings.Contains(path, "/v1/data_sources") {
+			return "For data-sources commands, use a data_source_id (not a database_id).\n" +
+				"  Run: notion search post-search --body '{\"filter\":{\"value\":\"data_source\",\"property\":\"object\"}}' to list them"
+		}
 		return "Check the ID is correct and the page/database is shared with your integration"
 	case "unauthorized":
 		return "Run 'notion auth login' to authenticate, or check your token"
