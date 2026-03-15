@@ -109,7 +109,11 @@ func newUpdateABlockCmd() *cobra.Command {
 			// Execute request
 			var bodyData interface{}
 			if body != "" {
-				if err := json.Unmarshal([]byte(body), &bodyData); err != nil {
+				resolved, err := resolveBody(body)
+				if err != nil {
+					return err
+				}
+				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
 			}
@@ -122,7 +126,7 @@ func newUpdateABlockCmd() *cobra.Command {
 			return render.Output(data, format)
 		},
 	}
-	cmd.Flags().StringVar(&body, "body", "", "JSON request body")
+	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
 
 	return cmd
 }
@@ -203,7 +207,11 @@ func newPatchBlockChildrenCmd() *cobra.Command {
 			// Execute request
 			var bodyData interface{}
 			if body != "" {
-				if err := json.Unmarshal([]byte(body), &bodyData); err != nil {
+				resolved, err := resolveBody(body)
+				if err != nil {
+					return err
+				}
+				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
 			}
@@ -216,7 +224,7 @@ func newPatchBlockChildrenCmd() *cobra.Command {
 			return render.Output(data, format)
 		},
 	}
-	cmd.Flags().StringVar(&body, "body", "", "JSON request body")
+	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
 
 	return cmd
 }

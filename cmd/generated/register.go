@@ -68,7 +68,8 @@ func AddTo(parent *cobra.Command) {
 		group.AddCommand(newListFileUploadsCmd())
 		group.AddCommand(newCreateFileCmd())
 		group.AddCommand(newRetrieveFileUploadCmd())
-		group.AddCommand(newUploadFileCmd()) // manual multipart implementation
+		group.AddCommand(newCompleteFileUploadCmd())
+		group.AddCommand(newUploadFileCmd())
 
 		parent.AddCommand(group)
 	}

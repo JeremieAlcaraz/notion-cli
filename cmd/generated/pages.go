@@ -38,7 +38,11 @@ func newPostPageCmd() *cobra.Command {
 			// Execute request
 			var bodyData interface{}
 			if body != "" {
-				if err := json.Unmarshal([]byte(body), &bodyData); err != nil {
+				resolved, err := resolveBody(body)
+				if err != nil {
+					return err
+				}
+				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
 			}
@@ -51,7 +55,7 @@ func newPostPageCmd() *cobra.Command {
 			return render.Output(data, format)
 		},
 	}
-	cmd.Flags().StringVar(&body, "body", "", "JSON request body")
+	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
 
 	return cmd
 }
@@ -127,7 +131,11 @@ func newPatchPageCmd() *cobra.Command {
 			// Execute request
 			var bodyData interface{}
 			if body != "" {
-				if err := json.Unmarshal([]byte(body), &bodyData); err != nil {
+				resolved, err := resolveBody(body)
+				if err != nil {
+					return err
+				}
+				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
 			}
@@ -140,7 +148,7 @@ func newPatchPageCmd() *cobra.Command {
 			return render.Output(data, format)
 		},
 	}
-	cmd.Flags().StringVar(&body, "body", "", "JSON request body")
+	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
 
 	return cmd
 }
@@ -216,7 +224,11 @@ func newUpdatePageMarkdownCmd() *cobra.Command {
 			// Execute request
 			var bodyData interface{}
 			if body != "" {
-				if err := json.Unmarshal([]byte(body), &bodyData); err != nil {
+				resolved, err := resolveBody(body)
+				if err != nil {
+					return err
+				}
+				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
 			}
@@ -229,7 +241,7 @@ func newUpdatePageMarkdownCmd() *cobra.Command {
 			return render.Output(data, format)
 		},
 	}
-	cmd.Flags().StringVar(&body, "body", "", "JSON request body")
+	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
 
 	return cmd
 }
@@ -259,7 +271,11 @@ func newMovePageCmd() *cobra.Command {
 			// Execute request
 			var bodyData interface{}
 			if body != "" {
-				if err := json.Unmarshal([]byte(body), &bodyData); err != nil {
+				resolved, err := resolveBody(body)
+				if err != nil {
+					return err
+				}
+				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
 			}
@@ -272,7 +288,7 @@ func newMovePageCmd() *cobra.Command {
 			return render.Output(data, format)
 		},
 	}
-	cmd.Flags().StringVar(&body, "body", "", "JSON request body")
+	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
 
 	return cmd
 }

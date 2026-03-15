@@ -93,7 +93,11 @@ func newCreateFileCmd() *cobra.Command {
 			// Execute request
 			var bodyData interface{}
 			if body != "" {
-				if err := json.Unmarshal([]byte(body), &bodyData); err != nil {
+				resolved, err := resolveBody(body)
+				if err != nil {
+					return err
+				}
+				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
 			}
@@ -106,7 +110,7 @@ func newCreateFileCmd() *cobra.Command {
 			return render.Output(data, format)
 		},
 	}
-	cmd.Flags().StringVar(&body, "body", "", "JSON request body")
+	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
 
 	return cmd
 }
@@ -146,5 +150,84 @@ func newRetrieveFileUploadCmd() *cobra.Command {
 	return cmd
 }
 
-// upload-file and complete-file-upload are implemented in file_upload_manual.go
-// as they require multipart form handling.
+// complete-file-upload — Complete a multi-part file upload
+// POST /v1/file_uploads/{file_upload_id}/complete
+func newCompleteFileUploadCmd() *cobra.Command {
+
+	cmd := &cobra.Command{
+		Use:   "complete-file-upload <file_upload_id>",
+		Short: "Complete a multi-part file upload",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			token, err := GetToken()
+			if err != nil {
+				return err
+			}
+			c := client.New(token)
+
+			// Build path
+			path := "/v1/file_uploads/{file_upload_id}/complete"
+			path = strings.ReplaceAll(path, "{file_upload_id}", args[0])
+
+			// Build query string
+
+			// Execute request
+			data, err := c.Post(path, nil)
+			if err != nil {
+				return err
+			}
+
+			format, _ := cmd.Flags().GetString("format")
+			return render.Output(data, format)
+		},
+	}
+
+	return cmd
+}
+
+// upload-file — Upload a file
+// POST /v1/file_uploads/{file_upload_id}/send
+func newUploadFileCmd() *cobra.Command {
+	var body string
+
+	cmd := &cobra.Command{
+		Use:   "upload-file <file_upload_id>",
+		Short: "Upload a file",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			token, err := GetToken()
+			if err != nil {
+				return err
+			}
+			c := client.New(token)
+
+			// Build path
+			path := "/v1/file_uploads/{file_upload_id}/send"
+			path = strings.ReplaceAll(path, "{file_upload_id}", args[0])
+
+			// Build query string
+
+			// Execute request
+			var bodyData interface{}
+			if body != "" {
+				resolved, err := resolveBody(body)
+				if err != nil {
+					return err
+				}
+				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
+					return fmt.Errorf("invalid JSON body: %w", err)
+				}
+			}
+			data, err := c.Post(path, bodyData)
+			if err != nil {
+				return err
+			}
+
+			format, _ := cmd.Flags().GetString("format")
+			return render.Output(data, format)
+		},
+	}
+	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+
+	return cmd
+}

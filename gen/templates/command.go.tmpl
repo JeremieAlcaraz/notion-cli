@@ -67,7 +67,11 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 			{{- if .HasBody}}
 			var bodyData interface{}
 			if body != "" {
-				if err := json.Unmarshal([]byte(body), &bodyData); err != nil {
+				resolved, err := resolveBody(body)
+				if err != nil {
+					return err
+				}
+				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
 			}
@@ -87,7 +91,7 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 	}
 
 	{{- if .HasBody}}
-	cmd.Flags().StringVar(&body, "body", "", "JSON request body")
+	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
 	{{- end}}
 	{{- range .QueryParams}}
 	cmd.Flags().StringVar(&flag{{pascal .Name}}, "{{kebab .Name}}", "", "{{.Schema.Description}}")
