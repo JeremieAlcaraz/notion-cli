@@ -53,7 +53,7 @@ notion-cli/
 
 ## Phase 1 — Fondations
 
-- [ ] T01 Mettre à jour le header de version API
+- [x] T01 Mettre à jour le header de version API
   Depends on: -
   Changes: internal/client/client.go
   Benefits: Corriger immédiatement les breaking changes (archived→in_trash, position, etc.)
