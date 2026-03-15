@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/4ier/notion-cli/cmd/generated"
 	"github.com/4ier/notion-cli/internal/config"
 	"github.com/spf13/cobra"
 )
@@ -47,6 +48,9 @@ func init() {
 	rootCmd.AddCommand(apiCmd)
 	rootCmd.AddCommand(commentCmd)
 	rootCmd.AddCommand(fileCmd)
+
+	// Generated commands from OpenAPI spec
+	generated.AddTo(rootCmd)
 }
 
 // getToken returns the Notion API token from flag, env, or config file.

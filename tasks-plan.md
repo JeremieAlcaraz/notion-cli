@@ -97,7 +97,7 @@ notion-cli/
   Tests: just generate && go build ./... → zéro erreur de compilation
   Commit: feat(gen): wire generator — just generate produces compilable cmd/generated/
 
-- [ ] T07 Tests du générateur (gen/gen_test.go)
+- [x] T07 Tests du générateur (gen/gen_test.go)
   Depends on: T06
   Changes: gen/gen_test.go
   Benefits: Garantit que si la spec change, le générateur détecte les breaking changes et échoue proprement
