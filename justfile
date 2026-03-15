@@ -12,7 +12,7 @@ update-spec:
 
 # Generate CLI code from OpenAPI spec
 generate:
-    go generate ./gen/...
+    go run ./gen/generate.go
 
 # Build the binary
 build:

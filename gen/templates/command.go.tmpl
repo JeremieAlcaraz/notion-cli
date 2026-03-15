@@ -5,13 +5,14 @@
 package generated
 
 import (
-	"encoding/json"
-	"fmt"
-	"strings"
-
+	{{- if .NeedsJSON}}"encoding/json"
+	{{end -}}
+	{{- if .NeedsFmt}}"fmt"
+	{{end -}}
+	{{- if .NeedsStrings}}"strings"
+	{{end}}
 	"github.com/spf13/cobra"
 	"github.com/4ier/notion-cli/internal/client"
-	"github.com/4ier/notion-cli/internal/config"
 	"github.com/4ier/notion-cli/internal/render"
 )
 
@@ -23,9 +24,7 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 	var body string
 	{{- end}}
 	{{- range .QueryParams}}
-	{{- if not .IsSkipped}}
 	var flag{{pascal .Name}} string
-	{{- end}}
 	{{- end}}
 
 	cmd := &cobra.Command{
@@ -37,11 +36,11 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 		Args:  cobra.NoArgs,
 		{{- end}}
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Load()
+			token, err := GetToken()
 			if err != nil {
 				return err
 			}
-			c := client.New(cfg.ActiveToken())
+			c := client.New(token)
 
 			// Build path
 			path := "{{.Path}}"
@@ -51,16 +50,16 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 
 			// Build query string
 			{{- if .QueryParams}}
-			query := []string{}
-			{{- range .QueryParams}}
-			{{- if not .IsSkipped}}
-			if flag{{pascal .Name}} != "" {
-				query = append(query, "{{.Name}}="+flag{{pascal .Name}})
-			}
-			{{- end}}
-			{{- end}}
-			if len(query) > 0 {
-				path += "?" + strings.Join(query, "&")
+			{
+				query := []string{}
+				{{- range .QueryParams}}
+				if flag{{pascal .Name}} != "" {
+					query = append(query, "{{.Name}}="+flag{{pascal .Name}})
+				}
+				{{- end}}
+				if len(query) > 0 {
+					path += "?" + strings.Join(query, "&")
+				}
 			}
 			{{- end}}
 
@@ -72,7 +71,9 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
 			}
-			data, err := c.{{httpMethod .Method}}(path{{if .HasBody}}, bodyData{{end}})
+			data, err := c.{{httpMethod .Method}}(path, bodyData)
+			{{- else if needsNilBody .Method}}
+			data, err := c.{{httpMethod .Method}}(path, nil)
 			{{- else}}
 			data, err := c.{{httpMethod .Method}}(path)
 			{{- end}}
@@ -89,9 +90,7 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body")
 	{{- end}}
 	{{- range .QueryParams}}
-	{{- if not .IsSkipped}}
 	cmd.Flags().StringVar(&flag{{pascal .Name}}, "{{kebab .Name}}", "", "{{.Schema.Description}}")
-	{{- end}}
 	{{- end}}
 
 	return cmd

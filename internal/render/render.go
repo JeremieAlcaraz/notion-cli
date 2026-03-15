@@ -15,6 +15,45 @@ func IsTTY() bool {
 	return term.IsTerminal(int(os.Stdout.Fd()))
 }
 
+// Output prints raw API response bytes in the requested format.
+// Used by generated commands that receive []byte from client.Get/Post/Patch/Delete.
+func Output(data []byte, format string) error {
+	if format == "" {
+		if IsTTY() {
+			format = "table"
+		} else {
+			format = "json"
+		}
+	}
+	switch format {
+	case "json":
+		var v interface{}
+		if err := json.Unmarshal(data, &v); err != nil {
+			fmt.Println(string(data))
+			return nil
+		}
+		out, err := json.MarshalIndent(v, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(out))
+	default:
+		// For table/text/md: pretty-print JSON for now — per-resource renderers
+		// can be added incrementally without touching generated code.
+		var v interface{}
+		if err := json.Unmarshal(data, &v); err != nil {
+			fmt.Println(string(data))
+			return nil
+		}
+		out, err := json.MarshalIndent(v, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(out))
+	}
+	return nil
+}
+
 // JSON outputs data as formatted JSON.
 func JSON(data interface{}) error {
 	out, err := json.MarshalIndent(data, "", "  ")
