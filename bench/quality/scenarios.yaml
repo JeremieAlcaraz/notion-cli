@@ -1,0 +1,227 @@
+# bench/quality/scenarios.yaml
+# 10 agent quality scenarios with objective success criteria.
+#
+# Each scenario represents a realistic agent task.
+# success_criteria are checked programmatically by bench/quality/eval.py.
+#
+# data_required   : fields the agent MUST have to complete the task
+# data_not_required: fields the agent does NOT need (safe to strip)
+#
+# Optimization columns (filled by QP03 after implementation):
+#   baseline_command  : raw command, no optimization flags
+#   optimized_command : command with optimization flags to test
+
+scenarios:
+
+  - id: SC01
+    description: "Identifier le bot courant (self-check de l'agent)"
+    task: "L'agent vérifie son propre token et récupère son identité"
+    baseline_command: "notion --agent users get-self"
+    optimized_command: "notion --agent users get-self --fields id,name,type"
+    data_required:
+      - id        # pour référencer l'agent dans d'autres appels
+      - name      # pour confirmer le bon workspace
+      - type      # doit être "bot"
+    data_not_required:
+      - avatar_url
+      - request_id
+      - bot.workspace_limits
+      - bot.workspace_id
+    success_criteria:
+      - "La réponse contient le champ 'id' non vide"
+      - "La réponse contient le champ 'name' non vide"
+      - "La réponse contient le champ 'type' égal à 'bot'"
+
+  - id: SC02
+    description: "Lister les utilisateurs du workspace"
+    task: "L'agent récupère la liste des membres pour mentionner quelqu'un dans une page"
+    baseline_command: "notion --agent users get-users"
+    optimized_command: "notion --agent users get-users --fields id,name,type"
+    data_required:
+      - results[].id    # pour créer une mention @user
+      - results[].name  # pour identifier la bonne personne
+      - results[].type  # person vs bot
+    data_not_required:
+      - results[].avatar_url
+      - results[].person.email
+      - request_id
+      - next_cursor     # si has_more=false
+    success_criteria:
+      - "La réponse est une liste (object=list ou tableau JSON)"
+      - "Chaque item contient 'id' non vide"
+      - "Chaque item contient 'name' non vide"
+      - "Chaque item contient 'type' non vide"
+
+  - id: SC03
+    description: "Rechercher une page par titre"
+    task: "L'agent cherche une page nommée 'Demo' pour en récupérer l'ID"
+    baseline_command: "notion --agent search post-search --body '{\"query\":\"Demo\"}'"
+    optimized_command: "notion --agent search post-search --body '{\"query\":\"Demo\"}' --fields id,object,url"
+    data_required:
+      - results[].id      # pour les appels suivants
+      - results[].object  # page vs database
+      - results[].url     # pour référence humaine si besoin
+    data_not_required:
+      - results[].created_time
+      - results[].created_by
+      - results[].last_edited_by
+      - results[].cover
+      - results[].icon
+      - results[].properties  # pas besoin pour un simple lookup
+      - request_id
+    success_criteria:
+      - "La réponse contient 'results' (liste)"
+      - "Chaque item de results contient 'id' non vide"
+      - "Chaque item de results contient 'object' (page ou database)"
+      - "L'agent peut extraire l'ID de la page Demo sans appel supplémentaire"
+
+  - id: SC04
+    description: "Lire les métadonnées d'une page"
+    task: "L'agent récupère titre, statut et parent d'une page pour décider quoi faire"
+    baseline_command: "notion --agent pages retrieve-a-page 32445368-aa31-80da-ad1a-f9d92a4737a0"
+    optimized_command: "notion --agent pages retrieve-a-page 32445368-aa31-80da-ad1a-f9d92a4737a0 --fields id,url,parent,properties,archived"
+    data_required:
+      - id
+      - url         # pour référencer la page
+      - parent      # pour navigation vers le parent
+      - properties  # titre + propriétés métier
+      - archived    # pour savoir si la page est active
+    data_not_required:
+      - created_time
+      - created_by
+      - last_edited_by
+      - cover
+      - icon
+      - public_url
+      - request_id
+      - in_trash
+    success_criteria:
+      - "La réponse contient 'id' non vide"
+      - "La réponse contient 'url' non vide"
+      - "La réponse contient 'parent' non vide"
+      - "La réponse contient 'properties' non vide"
+      - "La réponse contient 'archived' (booléen)"
+
+  - id: SC05
+    description: "Lire le contenu textuel d'une page"
+    task: "L'agent lit le contenu d'une page pour le résumer ou l'analyser"
+    baseline_command: "notion --agent blocks get-block-children 32445368-aa31-80da-ad1a-f9d92a4737a0"
+    optimized_command: "notion --agent blocks get-block-children 32445368-aa31-80da-ad1a-f9d92a4737a0 --format md"
+    data_required:
+      - text_content  # le texte lisible (plain_text ou Markdown)
+      - block_types   # pour comprendre la structure (titres, listes, code)
+    data_not_required:
+      - results[].id          # l'ID de bloc est rarement utile pour une lecture
+      - results[].created_by
+      - results[].last_edited_time
+      - results[].has_children  # peut être omis si on ne navigue pas
+      - request_id
+      - results[].*.annotations  # bold/italic ne change pas le sens
+    success_criteria:
+      - "La réponse contient du texte lisible (non vide)"
+      - "Les titres sont identifiables (## en MD, ou type=heading_* en JSON)"
+      - "Les paragraphes sont identifiables"
+      - "Le contenu est injectable directement dans un prompt sans post-traitement"
+
+  - id: SC06
+    description: "Créer une page avec titre et propriétés"
+    task: "L'agent crée une nouvelle page dans un parent donné"
+    baseline_command: "notion --agent pages create-a-page --body '{\"parent\":{\"type\":\"workspace\",\"workspace\":true},\"properties\":{\"title\":{\"title\":[{\"text\":{\"content\":\"Test QP06\"}}]}}}'"
+    optimized_command: "notion --agent pages create-a-page --fields id,url --body '{\"parent\":{\"type\":\"workspace\",\"workspace\":true},\"properties\":{\"title\":{\"title\":[{\"text\":{\"content\":\"Test QP06\"}}]}}}'"
+    data_required:
+      - id   # pour référencer la page créée dans les appels suivants
+      - url  # pour confirmation et référence
+    data_not_required:
+      - created_time
+      - created_by
+      - last_edited_by
+      - cover
+      - icon
+      - properties  # on sait ce qu'on vient de créer
+      - request_id
+    success_criteria:
+      - "La réponse contient 'id' non vide"
+      - "La réponse contient 'url' non vide"
+      - "L'ID est au format UUID valide (8-4-4-4-12)"
+
+  - id: SC07
+    description: "Ajouter un commentaire à une page"
+    task: "L'agent ajoute un commentaire de suivi sur une page existante"
+    baseline_command: "notion --agent comments create-a-comment --body '{\"parent\":{\"page_id\":\"32445368-aa31-80da-ad1a-f9d92a4737a0\"},\"rich_text\":[{\"text\":{\"content\":\"Test QP07\"}}]}'"
+    optimized_command: "notion --agent comments create-a-comment --fields id,created_time --body '{\"parent\":{\"page_id\":\"32445368-aa31-80da-ad1a-f9d92a4737a0\"},\"rich_text\":[{\"text\":{\"content\":\"Test QP07\"}}]}'"
+    data_required:
+      - id            # pour référencer le commentaire
+      - created_time  # pour confirmer que c'est bien le commentaire qu'on vient de créer
+    data_not_required:
+      - created_by
+      - last_edited_time
+      - rich_text     # on sait ce qu'on vient d'écrire
+      - parent        # on connaît le parent
+      - request_id
+    success_criteria:
+      - "La réponse contient 'id' non vide"
+      - "La réponse contient 'created_time' non vide"
+
+  - id: SC08
+    description: "Lister les commentaires d'une page"
+    task: "L'agent lit les commentaires pour prendre du contexte avant d'agir"
+    baseline_command: "notion --agent comments retrieve-comments --block-id 32445368-aa31-80da-ad1a-f9d92a4737a0"
+    optimized_command: "notion --agent comments retrieve-comments --block-id 32445368-aa31-80da-ad1a-f9d92a4737a0 --fields id,rich_text,created_time"
+    data_required:
+      - results[].id           # pour référencer un commentaire spécifique
+      - results[].rich_text    # le texte du commentaire — c'est le contenu principal
+      - results[].created_time # pour ordonner chronologiquement
+    data_not_required:
+      - results[].created_by
+      - results[].last_edited_time
+      - results[].parent
+      - request_id
+    success_criteria:
+      - "La réponse est une liste"
+      - "Chaque item contient 'id' non vide"
+      - "Chaque item contient 'rich_text' avec du contenu textuel"
+      - "Chaque item contient 'created_time'"
+
+  - id: SC09
+    description: "Mettre à jour le titre d'une page existante"
+    task: "L'agent modifie le titre d'une page après l'avoir créée"
+    baseline_command: "notion --agent pages update-page-properties 32445368-aa31-80da-ad1a-f9d92a4737a0 --body '{\"properties\":{\"title\":{\"title\":[{\"text\":{\"content\":\"Demo Page CLI (updated via CLI)\"}}]}}}'"
+    optimized_command: "notion --agent pages update-page-properties 32445368-aa31-80da-ad1a-f9d92a4737a0 --fields id,last_edited_time --body '{\"properties\":{\"title\":{\"title\":[{\"text\":{\"content\":\"Demo Page CLI (updated via CLI)\"}}]}}}'"
+    data_required:
+      - id               # confirmation que c'est bien la bonne page
+      - last_edited_time # confirmation que la mise à jour a eu lieu
+    data_not_required:
+      - created_time
+      - created_by
+      - last_edited_by
+      - cover
+      - icon
+      - properties  # on connaît la nouvelle valeur
+      - request_id
+    success_criteria:
+      - "La réponse contient 'id' correspondant à la page mise à jour"
+      - "La réponse contient 'last_edited_time' non vide"
+
+  - id: SC10
+    description: "Recherche full-text et navigation vers une sous-page"
+    task: "L'agent cherche du contenu, identifie une page, puis lit ses blocs enfants"
+    baseline_command: "notion --agent search post-search --body '{\"query\":\"CLI\"}'"
+    optimized_command: "notion --agent search post-search --body '{\"query\":\"CLI\"}' --fields id,object,url,properties"
+    data_required:
+      - results[].id         # pour l'appel suivant (get-block-children)
+      - results[].object     # pour filtrer pages vs databases
+      - results[].url        # pour référence
+      - results[].properties # pour lire le titre et décider si c'est la bonne page
+    data_not_required:
+      - results[].created_time
+      - results[].created_by
+      - results[].last_edited_by
+      - results[].cover
+      - results[].icon
+      - results[].parent    # pas nécessaire pour la décision de navigation
+      - request_id
+    success_criteria:
+      - "La réponse contient 'results' non vide"
+      - "Chaque item contient 'id', 'object', 'url'"
+      - "Chaque item contient 'properties' avec le titre lisible"
+      - "L'agent peut choisir la bonne page et enchaîner get-block-children sans appel supplémentaire"
