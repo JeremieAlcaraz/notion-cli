@@ -84,6 +84,11 @@ func newCreateACommentCmd() *cobra.Command {
 		Short: "Create a comment",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				fmt.Println("Example --body JSON for create-a-comment:")
+				fmt.Println(`{}`)
+				return nil
+			}
 			token, err := GetToken()
 			if err != nil {
 				return err
@@ -121,6 +126,7 @@ func newCreateACommentCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
 
 	return cmd
 }
@@ -132,7 +138,12 @@ func newRetrieveCommentCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-comment <comment_id>",
 		Short: "Retrieve a comment",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {

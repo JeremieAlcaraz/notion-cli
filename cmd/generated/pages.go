@@ -24,6 +24,21 @@ func newPostPageCmd() *cobra.Command {
 		Short: "Create a page",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				fmt.Println("Example --body JSON for post-page:")
+				fmt.Println(`{
+  "children": [],
+  "content": [],
+  "cover": {},
+  "icon": {},
+  "markdown": "<string>",
+  "parent": {},
+  "position": {},
+  "properties": {},
+  "template": {}
+}`)
+				return nil
+			}
 			token, err := GetToken()
 			if err != nil {
 				return err
@@ -61,6 +76,7 @@ func newPostPageCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
 
 	return cmd
 }
@@ -73,7 +89,12 @@ func newRetrieveAPageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-a-page <page_id>",
 		Short: "Retrieve a page",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -124,8 +145,26 @@ func newPatchPageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "patch-page <page_id>",
 		Short: "Update page",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				fmt.Println("Example --body JSON for patch-page:")
+				fmt.Println(`{
+  "cover": {},
+  "erase_content": false,
+  "icon": {},
+  "in_trash": false,
+  "is_locked": false,
+  "properties": {},
+  "template": {}
+}`)
+				return nil
+			}
 			token, err := GetToken()
 			if err != nil {
 				return err
@@ -164,6 +203,7 @@ func newPatchPageCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
 
 	return cmd
 }
@@ -176,7 +216,12 @@ func newRetrievePageMarkdownCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-page-markdown <page_id>",
 		Short: "Retrieve a page as markdown",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -227,8 +272,18 @@ func newUpdatePageMarkdownCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-page-markdown <page_id>",
 		Short: "Update a page's content as markdown",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				fmt.Println("Example --body JSON for update-page-markdown:")
+				fmt.Println(`{}`)
+				return nil
+			}
 			token, err := GetToken()
 			if err != nil {
 				return err
@@ -267,6 +322,7 @@ func newUpdatePageMarkdownCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
 
 	return cmd
 }
@@ -279,8 +335,20 @@ func newMovePageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "move-page <page_id>",
 		Short: "Move a page",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				fmt.Println("Example --body JSON for move-page:")
+				fmt.Println(`{
+  "parent": {}  // required
+}`)
+				return nil
+			}
 			token, err := GetToken()
 			if err != nil {
 				return err
@@ -319,6 +387,7 @@ func newMovePageCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
 
 	return cmd
 }
@@ -332,7 +401,12 @@ func newRetrieveAPagePropertyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-a-page-property <page_id> <property_id>",
 		Short: "Retrieve a page property item",
-		Args:  cobra.ExactArgs(2),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(2)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {

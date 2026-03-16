@@ -84,6 +84,17 @@ func newCreateFileCmd() *cobra.Command {
 		Short: "Create a file upload",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				fmt.Println("Example --body JSON for create-file:")
+				fmt.Println(`{
+  "content_type": "<string>",
+  "external_url": "<string>",
+  "filename": "<string>",
+  "mode": "<string>",
+  "number_of_parts": 0
+}`)
+				return nil
+			}
 			token, err := GetToken()
 			if err != nil {
 				return err
@@ -121,6 +132,7 @@ func newCreateFileCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
 
 	return cmd
 }
@@ -132,7 +144,12 @@ func newRetrieveFileUploadCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-file-upload <file_upload_id>",
 		Short: "Retrieve a file upload",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {

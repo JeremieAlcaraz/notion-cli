@@ -23,6 +23,17 @@ func newPostSearchCmd() *cobra.Command {
 		Short: "Search by title",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				fmt.Println("Example --body JSON for post-search:")
+				fmt.Println(`{
+  "filter": {},
+  "page_size": 0,
+  "query": "<string>",
+  "sort": {},
+  "start_cursor": "<string>"
+}`)
+				return nil
+			}
 			token, err := GetToken()
 			if err != nil {
 				return err
@@ -60,6 +71,7 @@ func newPostSearchCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
 
 	return cmd
 }

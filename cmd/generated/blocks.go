@@ -21,7 +21,12 @@ func newDeleteABlockCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete-a-block <block_id>",
 		Short: "Delete a block",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -61,7 +66,12 @@ func newRetrieveABlockCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-a-block <block_id>",
 		Short: "Retrieve a block",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -102,8 +112,18 @@ func newUpdateABlockCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-a-block <block_id>",
 		Short: "Update a block",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				fmt.Println("Example --body JSON for update-a-block:")
+				fmt.Println(`{}`)
+				return nil
+			}
 			token, err := GetToken()
 			if err != nil {
 				return err
@@ -142,6 +162,7 @@ func newUpdateABlockCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
 
 	return cmd
 }
@@ -155,7 +176,12 @@ func newGetBlockChildrenCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get-block-children <block_id>",
 		Short: "Retrieve block children",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -210,8 +236,21 @@ func newPatchBlockChildrenCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "patch-block-children <block_id>",
 		Short: "Append block children",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				fmt.Println("Example --body JSON for patch-block-children:")
+				fmt.Println(`{
+  "children": [],  // required
+  "position": {}
+}`)
+				return nil
+			}
 			token, err := GetToken()
 			if err != nil {
 				return err
@@ -250,6 +289,7 @@ func newPatchBlockChildrenCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
 
 	return cmd
 }

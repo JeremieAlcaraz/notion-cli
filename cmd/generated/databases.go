@@ -24,6 +24,19 @@ func newCreateDatabaseCmd() *cobra.Command {
 		Short: "Create a database",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				fmt.Println("Example --body JSON for create-database:")
+				fmt.Println(`{
+  "parent": {},  // required
+  "cover": {},
+  "description": [],
+  "icon": {},
+  "initial_data_source": {},
+  "is_inline": false,
+  "title": []
+}`)
+				return nil
+			}
 			token, err := GetToken()
 			if err != nil {
 				return err
@@ -61,6 +74,7 @@ func newCreateDatabaseCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
 
 	return cmd
 }
@@ -72,7 +86,12 @@ func newRetrieveDatabaseCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-database <database_id>",
 		Short: "Retrieve a database",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -113,8 +132,27 @@ func newUpdateDatabaseCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-database <database_id>",
 		Short: "Update a database",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				fmt.Println("Example --body JSON for update-database:")
+				fmt.Println(`{
+  "cover": {},
+  "description": [],
+  "icon": {},
+  "in_trash": false,
+  "is_inline": false,
+  "is_locked": false,
+  "parent": {},
+  "title": []
+}`)
+				return nil
+			}
 			token, err := GetToken()
 			if err != nil {
 				return err
@@ -153,6 +191,7 @@ func newUpdateDatabaseCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
 
 	return cmd
 }

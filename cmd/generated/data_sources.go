@@ -24,6 +24,16 @@ func newCreateADatabaseCmd() *cobra.Command {
 		Short: "Create a data source",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				fmt.Println("Example --body JSON for create-a-database:")
+				fmt.Println(`{
+  "parent": {},  // required
+  "properties": {},  // required
+  "icon": {},
+  "title": []
+}`)
+				return nil
+			}
 			token, err := GetToken()
 			if err != nil {
 				return err
@@ -61,6 +71,7 @@ func newCreateADatabaseCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
 
 	return cmd
 }
@@ -72,7 +83,12 @@ func newRetrieveADataSourceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-a-data-source <data_source_id>",
 		Short: "Retrieve a data source",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -113,8 +129,24 @@ func newUpdateADataSourceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-a-data-source <data_source_id>",
 		Short: "Update a data source",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				fmt.Println("Example --body JSON for update-a-data-source:")
+				fmt.Println(`{
+  "icon": {},
+  "in_trash": false,
+  "parent": {},
+  "properties": {},
+  "title": []
+}`)
+				return nil
+			}
 			token, err := GetToken()
 			if err != nil {
 				return err
@@ -153,6 +185,7 @@ func newUpdateADataSourceCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
 
 	return cmd
 }
@@ -166,8 +199,25 @@ func newPostDatabaseQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "post-database-query <data_source_id>",
 		Short: "Query a data source",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				fmt.Println("Example --body JSON for post-database-query:")
+				fmt.Println(`{
+  "filter": {},
+  "in_trash": false,
+  "page_size": 0,
+  "result_type": "<string>",
+  "sorts": [],
+  "start_cursor": "<string>"
+}`)
+				return nil
+			}
 			token, err := GetToken()
 			if err != nil {
 				return err
@@ -215,6 +265,7 @@ func newPostDatabaseQueryCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
+	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
 	cmd.Flags().StringVar(&flagFilterProperties, "filter-properties", "", "")
 
 	return cmd
@@ -230,7 +281,12 @@ func newListDataSourceTemplatesCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list-data-source-templates <data_source_id>",
 		Short: "List templates in a data source",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {

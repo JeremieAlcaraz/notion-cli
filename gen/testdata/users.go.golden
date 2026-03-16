@@ -113,7 +113,12 @@ func newGetUserCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get-user <user_id>",
 		Short: "Retrieve a user",
-		Args:  cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {

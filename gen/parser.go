@@ -24,6 +24,28 @@ type SpecInfo struct {
 // PathItem maps HTTP methods to their operation definitions.
 type PathItem map[string]json.RawMessage
 
+// rawOperation is used for the initial JSON unmarshal before post-processing.
+type rawOperation struct {
+	OperationID string            `json:"operationId"`
+	Summary     string            `json:"summary"`
+	Tags        []string          `json:"tags"`
+	Parameters  []Param           `json:"parameters"`
+	RequestBody *rawRequestBody   `json:"requestBody"`
+}
+
+type rawRequestBody struct {
+	Required bool `json:"required"`
+	Content  map[string]struct {
+		Schema struct {
+			Properties map[string]struct {
+				Type        string `json:"type"`
+				Description string `json:"description"`
+			} `json:"properties"`
+			Required []string `json:"required"`
+		} `json:"schema"`
+	} `json:"content"`
+}
+
 // Operation represents a single API operation (one HTTP method on one path).
 type Operation struct {
 	// From the spec
@@ -73,6 +95,43 @@ func (o *Operation) HasBody() bool {
 	return o.RequestBody != nil
 }
 
+// BodyExample returns a minimal JSON example for the request body.
+// Returns empty string if no body is needed.
+func (o *Operation) BodyExample() string {
+	if o.RequestBody == nil || len(o.RequestBody.Properties) == 0 {
+		return "{}"
+	}
+	lines := []string{"{"}
+	props := o.RequestBody.Properties
+	for i, p := range props {
+		comma := ","
+		if i == len(props)-1 {
+			comma = ""
+		}
+		var val string
+		switch p.Type {
+		case "string":
+			val = `"<string>"`
+		case "boolean":
+			val = "false"
+		case "integer", "number":
+			val = "0"
+		case "array":
+			val = "[]"
+		default:
+			val = "{}"
+		}
+		req := ""
+		if p.Required {
+			req = "  // required"
+		}
+		line := fmt.Sprintf(`  %q: %s%s`, p.Name, val+comma, req)
+		lines = append(lines, line)
+	}
+	lines = append(lines, "}")
+	return strings.Join(lines, "\n")
+}
+
 // CobraUse returns the cobra Use string derived from path + method.
 // e.g. GET /v1/pages/{page_id} → "get-page"
 func (o *Operation) CobraUse() string {
@@ -114,7 +173,16 @@ type ParamSchema struct {
 
 // ReqBody signals that the operation accepts a JSON body.
 type ReqBody struct {
-	Required bool `json:"required"`
+	Required   bool              `json:"required"`
+	Properties []BodyProp        // extracted from schema.properties
+}
+
+// BodyProp represents one top-level property of a request body schema.
+type BodyProp struct {
+	Name        string
+	Type        string // "string", "boolean", "integer", "object", "array", or "" for complex
+	Description string
+	Required    bool
 }
 
 // ParseSpec reads and parses the OpenAPI JSON file at path.
@@ -143,16 +211,52 @@ func (s *Spec) Operations() []*Operation {
 				continue
 			}
 
-			var op Operation
-			if err := json.Unmarshal(raw, &op); err != nil {
+			var raw2 rawOperation
+			if err := json.Unmarshal(raw, &raw2); err != nil {
 				continue
 			}
-			op.Method = method
-			op.Path = path
+
+			op := Operation{
+				OperationID: raw2.OperationID,
+				Summary:     raw2.Summary,
+				Tags:        raw2.Tags,
+				Parameters:  raw2.Parameters,
+				Method:      method,
+				Path:        path,
+			}
 
 			// Skip OAuth — not relevant for a token-based CLI
 			if op.Tag() == "OAuth" {
 				continue
+			}
+
+			// Build ReqBody with property info
+			if raw2.RequestBody != nil {
+				rb := &ReqBody{Required: raw2.RequestBody.Required}
+				if schema, ok := raw2.RequestBody.Content["application/json"]; ok {
+					// collect required set
+					requiredSet := map[string]bool{}
+					for _, r := range schema.Schema.Required {
+						requiredSet[r] = true
+					}
+					for name, prop := range schema.Schema.Properties {
+						rb.Properties = append(rb.Properties, BodyProp{
+							Name:        name,
+							Type:        prop.Type,
+							Description: prop.Description,
+							Required:    requiredSet[name],
+						})
+					}
+					// sort for determinism
+					sort.Slice(rb.Properties, func(i, j int) bool {
+						// required first, then alphabetical
+						if rb.Properties[i].Required != rb.Properties[j].Required {
+							return rb.Properties[i].Required
+						}
+						return rb.Properties[i].Name < rb.Properties[j].Name
+					})
+				}
+				op.RequestBody = rb
 			}
 
 			// Filter out $ref / header params
