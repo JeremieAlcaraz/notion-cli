@@ -178,7 +178,7 @@ Outil de comptage : `tiktoken` (cl100k_base, modèle GPT-4/Claude compatible) vi
 
 ### BM02 — Mesure comparative human vs agent sur le corpus
 
-- [ ] BM02 Exécuter le corpus en mode human et agent, générer un rapport diff
+- [x] BM02 Exécuter le corpus en mode human et agent, générer un rapport diff
   Depends on: BM01, AB02, AB05
   Changes: bench/compare.sh, bench/results/report.md (généré)
   Benefits: Chiffres réels : bytes économisés, tokens économisés, % de réduction par commande

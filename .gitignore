@@ -53,3 +53,4 @@ img-to-send/
 bench/.venv/
 bench/results/raw/
 bench/results/tokens.csv
+bench/results/report.md
