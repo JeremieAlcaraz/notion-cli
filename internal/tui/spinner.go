@@ -1,39 +1,44 @@
 package tui
 
 import (
+	"fmt"
 	"os"
-	"os/exec"
+	"time"
 )
 
-// Spinner starts a gum spinner on stderr and returns a stop function.
-// If gum is unavailable or stdout is not a TTY, stop is a no-op.
-//
-// Usage:
-//
-//	stop := tui.StartSpinner("Loading...")
-//	defer stop()
+var spinnerFrames = []string{"⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"}
+
+// StartSpinner displays an animated spinner on stderr while work is in progress.
+// Returns a stop function that clears the spinner line.
+// No-op if gum is disabled or stderr is not a TTY.
 func StartSpinner(title string) func() {
-	if !IsAvailable() || !isTTY() {
+	if noGum || !isTTY() {
 		return func() {}
 	}
 
-	cmd := exec.Command("gum", "spin",
-		"--spinner", "dot",
-		"--title", " "+title,
-	)
-	cmd.Stderr = os.Stderr
+	done := make(chan struct{})
 
-	if err := cmd.Start(); err != nil {
-		return func() {}
-	}
+	go func() {
+		i := 0
+		for {
+			select {
+			case <-done:
+				return
+			case <-time.After(80 * time.Millisecond):
+				fmt.Fprintf(os.Stderr, "\r%s %s ", spinnerFrames[i%len(spinnerFrames)], title)
+				i++
+			}
+		}
+	}()
 
 	return func() {
-		_ = cmd.Process.Kill()
-		_ = cmd.Wait()
+		close(done)
+		// Clear the spinner line
+		fmt.Fprintf(os.Stderr, "\r\033[K")
 	}
 }
 
-// isTTY reports whether stderr is a terminal (spinner should only appear there).
+// isTTY reports whether stderr is a terminal.
 func isTTY() bool {
 	fi, err := os.Stderr.Stat()
 	if err != nil {
