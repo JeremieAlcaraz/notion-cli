@@ -10,6 +10,7 @@ import (
 	"github.com/4ier/notion-cli/internal/client"
 	"github.com/4ier/notion-cli/internal/config"
 	"github.com/4ier/notion-cli/internal/render"
+	"github.com/4ier/notion-cli/internal/tui"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -41,7 +42,7 @@ Examples:
 
 		var token string
 		if withToken {
-			// If stdin is a TTY, show a prompt so the user knows to paste
+			// Read token from stdin (pipe-friendly)
 			if term.IsTerminal(int(os.Stdin.Fd())) {
 				fmt.Fprint(os.Stderr, "Token: ")
 			}
@@ -50,11 +51,11 @@ Examples:
 				token = strings.TrimSpace(scanner.Text())
 			}
 		} else {
-			// Interactive prompt
-			fmt.Fprint(os.Stderr, "Paste your integration token: ")
-			scanner := bufio.NewScanner(os.Stdin)
-			if scanner.Scan() {
-				token = strings.TrimSpace(scanner.Text())
+			// Interactive: use gum masked input, fallback to plain prompt
+			var err error
+			token, err = tui.AskPassword("Token: ", "secret_...")
+			if err != nil {
+				return fmt.Errorf("no token provided")
 			}
 		}
 
@@ -268,45 +269,64 @@ Examples:
 				return nil
 			}
 
-			fmt.Println("Available profiles:")
-			fmt.Println()
-			for i, name := range profiles {
-				profile := cfg.Profiles[name]
-				marker := "  "
-				if name == cfg.CurrentProfile {
-					marker = "→ "
+			if tui.IsAvailable() {
+				// Build display options: "name (workspace)"
+				options := make([]string, len(profiles))
+				for i, name := range profiles {
+					p := cfg.Profiles[name]
+					ws := p.WorkspaceName
+					if ws == "" {
+						ws = "unknown workspace"
+					}
+					marker := ""
+					if name == cfg.CurrentProfile {
+						marker = " ✓"
+					}
+					options[i] = fmt.Sprintf("%s (%s)%s", name, ws, marker)
 				}
-				workspace := profile.WorkspaceName
-				if workspace == "" {
-					workspace = "(unknown workspace)"
+				chosen, err := tui.AskChoose("Switch profile", options)
+				if err != nil {
+					return nil
 				}
-				fmt.Printf("%s%d. %s (%s)\n", marker, i+1, name, workspace)
-			}
-			fmt.Println()
-			fmt.Print("Select profile (number or name): ")
-
-			scanner := bufio.NewScanner(os.Stdin)
-			if !scanner.Scan() {
-				return nil
-			}
-			input := strings.TrimSpace(scanner.Text())
-
-			if input == "" {
-				return nil
-			}
-
-			// Try as number first
-			if num, err := strconv.Atoi(input); err == nil {
-				if num >= 1 && num <= len(profiles) {
-					targetProfile = profiles[num-1]
-				} else {
-					return fmt.Errorf("invalid selection: %d", num)
-				}
+				// Extract profile name (before first space)
+				targetProfile = strings.SplitN(chosen, " ", 2)[0]
 			} else {
-				// Try as profile name
-				targetProfile = input
-				if _, ok := cfg.Profiles[targetProfile]; !ok {
-					return fmt.Errorf("profile %q not found", targetProfile)
+				// Fallback: plain text list
+				fmt.Println("Available profiles:")
+				fmt.Println()
+				for i, name := range profiles {
+					p := cfg.Profiles[name]
+					marker := "  "
+					if name == cfg.CurrentProfile {
+						marker = "→ "
+					}
+					ws := p.WorkspaceName
+					if ws == "" {
+						ws = "(unknown workspace)"
+					}
+					fmt.Printf("%s%d. %s (%s)\n", marker, i+1, name, ws)
+				}
+				fmt.Println()
+				fmt.Print("Select profile (number or name): ")
+				scanner := bufio.NewScanner(os.Stdin)
+				if !scanner.Scan() {
+					return nil
+				}
+				input := strings.TrimSpace(scanner.Text())
+				if input == "" {
+					return nil
+				}
+				if num, err := strconv.Atoi(input); err == nil {
+					if num >= 1 && num <= len(profiles) {
+						targetProfile = profiles[num-1]
+					} else {
+						return fmt.Errorf("invalid selection: %d", num)
+					}
+				} else {
+					targetProfile = input
+					if _, ok := cfg.Profiles[targetProfile]; !ok {
+						return fmt.Errorf("profile %q not found", targetProfile)
+					}
 				}
 			}
 		}
