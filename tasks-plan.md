@@ -86,7 +86,7 @@ Objectif : réduire les tokens sans perte de données fonctionnelles, via des tr
 
 ### OA01 — --fields sur les listes (results[])
 
-- [ ] OA01 Appliquer --fields aux items de results[] quand la réponse est une liste
+- [x] OA01 Appliquer --fields aux items de results[] quand la réponse est une liste
   Depends on: AB05
   Changes: internal/render/render.go (OutputFields gère object==list), internal/render/list.go
   Benefits: `--fields id,title` sur une liste → -97% tokens (800 → 25 tokens par item)

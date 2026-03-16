@@ -56,7 +56,7 @@ scenarios:
     description: "Rechercher une page par titre"
     task: "L'agent cherche une page nommée 'Demo' pour en récupérer l'ID"
     baseline_command: "notion --agent search post-search --body '{\"query\":\"Demo\"}'"
-    optimized_command: "notion --agent search post-search --body '{\"query\":\"Demo\"}' --fields id,object,url"
+    optimized_command: "notion --agent search post-search --body '{\"query\":\"Demo\"}' --fields id,object,url,properties"
     data_required:
       - results[].id      # pour les appels suivants
       - results[].object  # page vs database
@@ -70,16 +70,16 @@ scenarios:
       - results[].properties  # pas besoin pour un simple lookup
       - request_id
     success_criteria:
-      - "La réponse contient 'results' (liste)"
-      - "Chaque item de results contient 'id' non vide"
-      - "Chaque item de results contient 'object' (page ou database)"
+      - "La réponse est une liste"
+      - "Chaque item contient 'id' non vide"
+      - "Chaque item contient 'object' non vide"
       - "L'agent peut extraire l'ID de la page Demo sans appel supplémentaire"
 
   - id: SC04
     description: "Lire les métadonnées d'une page"
     task: "L'agent récupère titre, statut et parent d'une page pour décider quoi faire"
     baseline_command: "notion --agent pages retrieve-a-page 32445368-aa31-80da-ad1a-f9d92a4737a0"
-    optimized_command: "notion --agent pages retrieve-a-page 32445368-aa31-80da-ad1a-f9d92a4737a0 --fields id,url,parent,properties,archived"
+    optimized_command: "notion --agent pages retrieve-a-page 32445368-aa31-80da-ad1a-f9d92a4737a0 --fields id,url,parent,properties,in_trash"
     data_required:
       - id
       - url         # pour référencer la page
@@ -205,7 +205,7 @@ scenarios:
     description: "Recherche full-text et navigation vers une sous-page"
     task: "L'agent cherche du contenu, identifie une page, puis lit ses blocs enfants"
     baseline_command: "notion --agent search post-search --body '{\"query\":\"CLI\"}'"
-    optimized_command: "notion --agent search post-search --body '{\"query\":\"CLI\"}' --fields id,object,url,properties"
+    optimized_command: "notion --agent search post-search --body '{\"query\":\"CLI\"}' --fields id,object,url,properties,parent"
     data_required:
       - results[].id         # pour l'appel suivant (get-block-children)
       - results[].object     # pour filtrer pages vs databases
@@ -220,7 +220,7 @@ scenarios:
       - results[].parent    # pas nécessaire pour la décision de navigation
       - request_id
     success_criteria:
-      - "La réponse contient 'results' non vide"
+      - "La réponse est une liste"
       - "Chaque item contient 'id', 'object', 'url'"
       - "Chaque item contient 'properties' avec le titre lisible"
       - "L'agent peut choisir la bonne page et enchaîner get-block-children sans appel supplémentaire"

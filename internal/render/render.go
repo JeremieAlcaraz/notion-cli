@@ -17,18 +17,54 @@ import (
 func OutputFields(data []byte, format, field, fields string) error {
 	if fields != "" {
 		keys := strings.Split(fields, ",")
-		var obj map[string]interface{}
-		if err := json.Unmarshal(data, &obj); err != nil {
+		for i, k := range keys {
+			keys[i] = strings.TrimSpace(k)
+		}
+
+		var raw interface{}
+		if err := json.Unmarshal(data, &raw); err != nil {
 			return fmt.Errorf("parse response: %w", err)
 		}
-		result := make(map[string]interface{}, len(keys))
-		for _, k := range keys {
-			k = strings.TrimSpace(k)
-			if v, ok := obj[k]; ok {
-				result[k] = v
+
+		var result interface{}
+
+		// If the response is a list wrapper {"object":"list","results":[...]},
+		// apply --fields to each item in results[].
+		if obj, ok := raw.(map[string]interface{}); ok {
+			if obj["object"] == "list" {
+				if items, ok := obj["results"].([]interface{}); ok {
+					filtered := make([]interface{}, 0, len(items))
+					for _, item := range items {
+						if m, ok := item.(map[string]interface{}); ok {
+							picked := make(map[string]interface{}, len(keys))
+							for _, k := range keys {
+								if v, ok := m[k]; ok {
+									picked[k] = v
+								}
+							}
+							filtered = append(filtered, picked)
+						}
+					}
+					result = filtered
+				}
 			}
 		}
-		// Always compact in agent mode, indented otherwise
+
+		// Fallback: single object field picking
+		if result == nil {
+			if obj, ok := raw.(map[string]interface{}); ok {
+				picked := make(map[string]interface{}, len(keys))
+				for _, k := range keys {
+					if v, ok := obj[k]; ok {
+						picked[k] = v
+					}
+				}
+				result = picked
+			} else {
+				result = raw
+			}
+		}
+
 		var out []byte
 		var err error
 		if mode.IsAgent() {
