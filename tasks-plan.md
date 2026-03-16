@@ -32,7 +32,7 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
 
 ### HA01 — Détection et installation de `gum`
 
-- [ ] HA01 Vérifier la présence de gum et afficher un message d'onboarding
+- [x] HA01 Vérifier la présence de gum et afficher un message d'onboarding
   Depends on: -
   Changes: internal/tui/gum.go (nouveau package), cmd/root.go
   Benefits: Le mode human dégrade gracieusement si gum est absent (fallback texte brut)
