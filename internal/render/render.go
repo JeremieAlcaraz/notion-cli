@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/4ier/notion-cli/internal/mode"
 	"github.com/4ier/notion-cli/internal/tui"
 	"github.com/fatih/color"
 	"golang.org/x/term"
@@ -41,6 +42,21 @@ func OutputField(data []byte, format, field string) error {
 			out, _ := json.MarshalIndent(v, "", "  ")
 			fmt.Println(string(out))
 		}
+		return nil
+	}
+
+	// Agent mode: compact JSON, no color, no tables
+	if mode.IsAgent() {
+		var v interface{}
+		if err := json.Unmarshal(data, &v); err != nil {
+			fmt.Print(string(data))
+			return nil
+		}
+		out, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		fmt.Print(string(out))
 		return nil
 	}
 

@@ -1,27 +1,17 @@
 package tui
 
-import "os"
+import "github.com/4ier/notion-cli/internal/mode"
 
-var agentMode bool
-
-// SetAgentMode enables or disables agent mode globally.
+// SetAgentMode enables or disables agent mode and implies --no-gum.
 func SetAgentMode(v bool) {
-	agentMode = v
+	mode.SetAgent(v)
 	if v {
-		// Agent mode implies --no-gum
 		noGum = true
 	}
 }
 
 // IsAgentMode reports whether agent mode is active.
-func IsAgentMode() bool {
-	return agentMode
-}
+func IsAgentMode() bool { return mode.IsAgent() }
 
 // InitAgentMode checks NOTION_AGENT env var and sets agent mode accordingly.
-// Call once at startup before any command runs.
-func InitAgentMode() {
-	if os.Getenv("NOTION_AGENT") == "1" {
-		SetAgentMode(true)
-	}
-}
+func InitAgentMode() { mode.InitFromEnv() }

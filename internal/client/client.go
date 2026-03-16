@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/4ier/notion-cli/internal/mode"
 	"github.com/4ier/notion-cli/internal/tui"
 )
 
@@ -103,11 +104,17 @@ func (c *Client) do(method, path string, body interface{}) ([]byte, error) {
 			Message string `json:"message"`
 		}
 		if json.Unmarshal(respBody, &apiErr) == nil && apiErr.Message != "" {
+			if mode.IsAgent() {
+				return nil, fmt.Errorf("ERR:%s:%s", apiErr.Code, apiErr.Message)
+			}
 			hint := errorHint(apiErr.Code, apiErr.Message, path)
 			if hint != "" {
 				return nil, fmt.Errorf("%s: %s\n  → %s", apiErr.Code, apiErr.Message, hint)
 			}
 			return nil, fmt.Errorf("%s: %s", apiErr.Code, apiErr.Message)
+		}
+		if mode.IsAgent() {
+			return nil, fmt.Errorf("ERR:http_%d:%s", resp.StatusCode, resp.Status)
 		}
 		return nil, fmt.Errorf("API error: %s", resp.Status)
 	}
