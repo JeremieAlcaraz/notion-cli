@@ -15,6 +15,9 @@ Thumbs.db
 # Test
 coverage.out
 
+# Local assets (not for version control)
+img-to-send/
+
 # Agent skill install dirs (created by npx skills add)
 .adal/
 .agent/
