@@ -16,6 +16,7 @@ var (
 	debugMode    bool
 	dryRunFlag   bool
 	noGumFlag    bool
+	agentFlag    bool
 	// Version is set by goreleaser ldflags
 	Version = "dev"
 )
@@ -46,10 +47,13 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "Show HTTP request/response details")
 	rootCmd.PersistentFlags().BoolVar(&dryRunFlag, "dry-run", false, "Print the HTTP request without executing it")
 	rootCmd.PersistentFlags().BoolVar(&noGumFlag, "no-gum", false, "Disable gum TUI enhancements (plain text output)")
+	rootCmd.PersistentFlags().BoolVar(&agentFlag, "agent", false, "Agent mode: minified JSON, no TUI, terse errors (also via NOTION_AGENT=1)")
 
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
-		generated.SetDryRun(dryRunFlag)
+		tui.InitAgentMode()         // check NOTION_AGENT env first
+		tui.SetAgentMode(agentFlag) // --agent flag overrides
 		tui.SetNoGum(noGumFlag)
+		generated.SetDryRun(dryRunFlag)
 		tui.WarnIfMissing()
 	}
 
