@@ -21,6 +21,19 @@ const (
 	modulePath = "github.com/4ier/notion-cli"
 )
 
+// manualFiles lists files in cmd/generated/ that must never be overwritten by the generator.
+var manualFiles = map[string]bool{
+	"helpers.go":             true,
+	"file_upload_manual.go":  true,
+}
+
+// manualOperationIDs lists operationIds that are implemented manually and must be
+// excluded from code generation (so the generated file doesn't conflict).
+var manualOperationIDs = map[string]bool{
+	"upload-file":           true,
+	"complete-file-upload":  true,
+}
+
 func main() {
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "generate: %v\n", err)
@@ -43,16 +56,25 @@ func run() error {
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return fmt.Errorf("mkdir %s: %w", outputDir, err)
 	}
-	// Remove previously generated files
+	// Remove previously generated files (skip manual files)
 	entries, _ := os.ReadDir(outputDir)
 	for _, e := range entries {
-		if strings.HasSuffix(e.Name(), ".go") && e.Name() != "helpers.go" {
+		if strings.HasSuffix(e.Name(), ".go") && !manualFiles[e.Name()] {
 			os.Remove(filepath.Join(outputDir, e.Name()))
 		}
 	}
 
 	// Generate one file per tag
 	for tag, ops := range byTag {
+		// Filter out manually-implemented operations
+		var filtered []*gen.Operation
+		for _, op := range ops {
+			if !manualOperationIDs[op.OperationID] {
+				filtered = append(filtered, op)
+			}
+		}
+		ops = filtered
+
 		slug := strings.ToLower(strings.ReplaceAll(tag, " ", "_"))
 		outPath := filepath.Join(outputDir, slug+".go")
 
@@ -75,8 +97,20 @@ func run() error {
 	}
 
 	// Generate register.go (AddTo function)
+	// Build filtered byTag (exclude manual operations from generated register)
+	filteredByTag := make(map[string][]*gen.Operation)
+	for tag, ops := range byTag {
+		var filtered []*gen.Operation
+		for _, op := range ops {
+			if !manualOperationIDs[op.OperationID] {
+				filtered = append(filtered, op)
+			}
+		}
+		filteredByTag[tag] = filtered
+	}
+
 	registerPath := filepath.Join(outputDir, "register.go")
-	raw, err := gen.RenderRootFileBytes(byTag)
+	raw, err := gen.RenderRootFileBytes(filteredByTag)
 	if err != nil {
 		return fmt.Errorf("render register: %w", err)
 	}

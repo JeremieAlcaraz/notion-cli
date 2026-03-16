@@ -19,6 +19,7 @@ func AddTo(parent *cobra.Command) {
 		group.AddCommand(newGetBlockChildrenCmd())
 		group.AddCommand(newPatchBlockChildrenCmd())
 
+		addManualCommands(group)
 		parent.AddCommand(group)
 	}
 	// Comments
@@ -31,6 +32,7 @@ func AddTo(parent *cobra.Command) {
 		group.AddCommand(newCreateACommentCmd())
 		group.AddCommand(newRetrieveCommentCmd())
 
+		addManualCommands(group)
 		parent.AddCommand(group)
 	}
 	// Data sources
@@ -45,6 +47,7 @@ func AddTo(parent *cobra.Command) {
 		group.AddCommand(newPostDatabaseQueryCmd())
 		group.AddCommand(newListDataSourceTemplatesCmd())
 
+		addManualCommands(group)
 		parent.AddCommand(group)
 	}
 	// Databases
@@ -57,6 +60,7 @@ func AddTo(parent *cobra.Command) {
 		group.AddCommand(newRetrieveDatabaseCmd())
 		group.AddCommand(newUpdateDatabaseCmd())
 
+		addManualCommands(group)
 		parent.AddCommand(group)
 	}
 	// File uploads
@@ -68,9 +72,8 @@ func AddTo(parent *cobra.Command) {
 		group.AddCommand(newListFileUploadsCmd())
 		group.AddCommand(newCreateFileCmd())
 		group.AddCommand(newRetrieveFileUploadCmd())
-		group.AddCommand(newCompleteFileUploadCmd())
-		group.AddCommand(newUploadFileCmd())
 
+		addManualCommands(group)
 		parent.AddCommand(group)
 	}
 	// Pages
@@ -87,6 +90,7 @@ func AddTo(parent *cobra.Command) {
 		group.AddCommand(newMovePageCmd())
 		group.AddCommand(newRetrieveAPagePropertyCmd())
 
+		addManualCommands(group)
 		parent.AddCommand(group)
 	}
 	// Search
@@ -97,6 +101,7 @@ func AddTo(parent *cobra.Command) {
 		}
 		group.AddCommand(newPostSearchCmd())
 
+		addManualCommands(group)
 		parent.AddCommand(group)
 	}
 	// Users
@@ -109,6 +114,7 @@ func AddTo(parent *cobra.Command) {
 		group.AddCommand(newGetSelfCmd())
 		group.AddCommand(newGetUserCmd())
 
+		addManualCommands(group)
 		parent.AddCommand(group)
 	}
 }

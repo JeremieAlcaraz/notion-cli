@@ -15,6 +15,7 @@ func AddTo(parent *cobra.Command) {
 		}
 		{{range $ops}}group.AddCommand(new{{pascal .OperationID}}Cmd())
 		{{end}}
+		addManualCommands(group)
 		parent.AddCommand(group)
 	}
 {{end}}}
