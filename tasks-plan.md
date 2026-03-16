@@ -95,7 +95,7 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
 
 ### HA08 — Commande notion auth login interactive avec gum
 
-- [ ] HA08 Wizard d'authentification guidé (gum input pour le token)
+- [x] HA08 Wizard d'authentification guidé (gum input pour le token)
   Depends on: HA01
   Changes: cmd/auth.go (déjà présent ?), internal/tui/auth_wizard.go
   Benefits: `./notion auth login` sans flag → prompt gum masqué pour le token
