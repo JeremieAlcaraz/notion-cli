@@ -1,198 +1,186 @@
-# Tasks Plan — Notion CLI généré depuis OpenAPI
+# Tasks Plan — Notion CLI : Human & Agent Modes
 
 ## Objectif
 
-Remplacer le code hardcodé par une CLI générée automatiquement depuis la spec OpenAPI officielle de Notion.
-À chaque mise à jour de la spec, on régénère la CLI.
-
-## Spec source
-
-- URL officielle : `https://developers.notion.com/openapi.json`
-- Version MCP (plus récente, 2025-09-03) : `https://raw.githubusercontent.com/makenotion/notion-mcp-server/main/scripts/notion-openapi.json`
-- Format : OpenAPI 3.1.0, ~801KB
+Deux modes d'interface pour le même binaire `notion` :
+- **`--human` (ou défaut)** : sortie riche avec `gum` + `jq` coloré, interactions guidées, UX terminal soignée
+- **`--agent`** : sortie JSON minifiée, zéro décoration, messages d'erreur ultra-courts — optimisé pour consommation par LLM
 
 ## Architecture cible
 
 ```
-notion-cli/
-├── spec/
-│   └── notion-openapi.json          # Spec snapshottée (source de vérité)
-├── gen/
-│   ├── generate.go                  # Script de génération (go generate)
-│   ├── parser.go                    # Parse la spec OpenAPI
-│   ├── templates/
-│   │   ├── command.go.tmpl          # Template pour une commande cobra
-│   │   └── root.go.tmpl             # Template pour le registre des commandes
-│   └── gen_test.go                  # Tests du générateur
-├── internal/
-│   ├── client/client.go             # Client HTTP (gardé, amélioré)
-│   ├── config/config.go             # Auth (gardé)
-│   └── render/render.go             # Output (gardé)
-├── cmd/
-│   └── generated/                   # ← CODE GÉNÉRÉ (ne pas éditer manuellement)
-│       ├── pages.go
-│       ├── databases.go
-│       ├── blocks.go
-│       ├── comments.go
-│       ├── users.go
-│       ├── search.go
-│       ├── file_uploads.go
-│       ├── file_upload_manual.go    # ← Manuel (multipart, non généré)
-│       └── helpers.go               # ← Manuel (token, non généré)
-├── main.go
-└── justfile                         # just generate, just build, just update-spec
+notion [--agent] <resource> <operation> [flags]
 ```
+
+Le flag global `--agent` (ou variable `NOTION_AGENT=1`) bascule tout le rendu en mode AI.
+En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun argument n'est fourni.
+
+## Spec source
+
+- Spec snapshottée : `spec/notion-openapi.json`
+- Binaire `gum` (Charmbracelet) — à installer via Homebrew ou détection automatique
 
 ## Phases
 
-- **Phase 1** — Fondations (T01–T03) : outillage, snapshot spec, justfile ✅
-- **Phase 2** — Générateur (T04–T07) : parser OpenAPI, templates, génération des commandes ✅
-- **Phase 3** — Migration (T08–T10) : brancher le code généré, supprimer le code hardcodé, docs ✅
-- **Phase 4** — Fiabilité (T13–T19) : améliorations issues de la batterie de tests ✅
-- **Phase 5** — Évolutivité (T11–T12) : CI auto-update spec, escape hatch api
+- **Phase A — CLI Human** (HA01–HA08) : gum, jq coloré, wizards interactifs
+- **Phase B — CLI Agent** (AB01–AB05) : mode minifié, JSON compact, erreurs codées
+- **Phase C — Benchmark** (BM01–BM03) : mesures réelles de tokens avant/après
 
 ---
 
-## Phase 1 — Fondations
+## Phase A — CLI Human (HA01–HA08)
 
-- [x] T01 Mettre à jour le header de version API
+### HA01 — Détection et installation de `gum`
+
+- [ ] HA01 Vérifier la présence de gum et afficher un message d'onboarding
   Depends on: -
-  Changes: internal/client/client.go
-  Benefits: Corriger immédiatement les breaking changes (archived→in_trash, position, etc.)
-  Tests: go build ./... && grep "2026-03-11" internal/client/client.go
-  Commit: fix: bump Notion-Version header to 2026-03-11
+  Changes: internal/tui/gum.go (nouveau package), cmd/root.go
+  Benefits: Le mode human dégrade gracieusement si gum est absent (fallback texte brut)
+  Tests: `./notion --help` sans gum → warning discret ; avec gum → pas de warning
+  Commit: feat: add gum availability check with graceful fallback
 
-- [x] T02 Snapshot la spec OpenAPI dans le repo
-  Depends on: T01
-  Changes: spec/notion-openapi.json, justfile (cible update-spec)
-  Benefits: Source de vérité versionnée, reproductibilité offline
-  Tests: jq '.info.version' spec/notion-openapi.json && just update-spec
-  Commit: dev: add OpenAPI spec snapshot and justfile
+### HA02 — Rendu JSON coloré avec jq
 
-- [x] T03 Créer le justfile avec les cibles essentielles
-  Depends on: T02
-  Changes: justfile
-  Benefits: Interface unique pour generate/build/test/update-spec
-  Tests: just affiche les cibles ; just build produit un binaire valide
-  Commit: (inclus dans T02)
+- [ ] HA02 Piper la sortie JSON dans jq --color-output en mode human
+  Depends on: HA01
+  Changes: internal/render/render.go (OutputField), internal/tui/jq.go
+  Benefits: Toute réponse API est lisible instantanément, sans install manuelle de jq
+  Tests: `./notion users get-self` → JSON coloré ; `./notion users get-self -f json` → JSON brut
+  Commit: feat: pipe JSON output through jq in human mode
 
-## Phase 2 — Générateur
+### HA03 — Spinner gum pendant les requêtes HTTP
 
-- [x] T04 Créer le parser OpenAPI (gen/parser.go)
-  Depends on: T02
-  Changes: gen/parser.go, gen/parser_test.go
-  Benefits: Lit la spec et produit une représentation Go structurée des endpoints
-  Tests: go test ./gen/... -run TestParser → 7/7 verts, 32 opérations parsées
-  Commit: feat: add OpenAPI 3.1 parser for Notion spec
+- [ ] HA03 Afficher un spinner gum pendant chaque appel API
+  Depends on: HA01
+  Changes: internal/client/client.go (do()), internal/tui/spinner.go
+  Benefits: Feedback visuel immédiat — l'utilisateur sait que la CLI travaille
+  Tests: `./notion databases retrieve-database <id>` → spinner s'affiche puis disparaît
+  Commit: feat: show gum spinner during HTTP requests
 
-- [x] T05 Créer les templates Go (gen/templates/)
-  Depends on: T04
-  Changes: gen/templates/command.go.tmpl, gen/templates/root.go.tmpl, gen/renderer.go
-  Benefits: Chaque endpoint devient une commande Cobra typée
-  Tests: go test ./gen/... -run TestTemplate → 12/12 verts
-  Commit: feat: add cobra command templates for code generation
+### HA04 — Wizard interactif pour les commandes sans argument
 
-- [x] T06 Créer le générateur principal (gen/generate.go)
-  Depends on: T05
-  Changes: gen/generate.go, cmd/generated/ (premier output), internal/render/render.go
-  Benefits: just generate produit cmd/generated/*.go compilable
-  Tests: just generate && go build ./... → zéro erreur
-  Commit: feat: wire generator — just generate produces cmd/generated
+- [ ] HA04 Lancer un wizard gum input/filter si un path-param est manquant
+  Depends on: HA01
+  Changes: gen/templates/command.go.tmpl (wizard hook), internal/tui/wizard.go
+  Benefits: `./notion pages retrieve-a-page` sans ID → gum input "Page ID :" plutôt qu'une erreur
+  Tests: `./notion pages retrieve-a-page` (sans arg) → prompt interactif ; avec arg → direct
+  Commit: feat: interactive gum wizard for missing path params
 
-- [x] T07 Tests du générateur avec golden files
-  Depends on: T06
-  Changes: gen/golden_test.go, gen/testdata/
-  Benefits: Tout changement de spec ou template est détecté explicitement
-  Tests: go test ./gen/... -v → 17/17 verts
-  Commit: test: add golden file tests for generator
+### HA05 — Wizard pour la saisie du body JSON champ par champ
 
-## Phase 3 — Migration
+- [ ] HA05 Proposer une saisie guidée des champs du body si --body est absent
+  Depends on: HA04
+  Changes: internal/tui/body_wizard.go, gen/parser.go (BodyProp déjà présents), gen/templates/command.go.tmpl
+  Benefits: Plus besoin de mémoriser le format JSON — la CLI guide champ par champ
+  Tests: `./notion comments create-a-comment` sans --body → wizard avec champs rich_text, parent
+  Commit: feat: guided body wizard for JSON fields via gum
 
-- [x] T08 Brancher cmd/generated/ dans root.go
-  Depends on: T06
-  Changes: cmd/root.go
-  Benefits: Les 32 commandes générées sont accessibles via le binaire
-  Tests: just build && ./notion --help affiche les groupes générés
-  Commit: feat: register generated commands in root
+### HA06 — Confirmation gum avant les opérations destructives
 
-- [x] T09 Supprimer le code hardcodé (cmd/*.go manuels)
-  Depends on: T08
-  Changes: Suppression de cmd/page.go, cmd/db.go, cmd/block.go, cmd/user.go,
-           cmd/comment.go, cmd/search.go, cmd/file.go + nettoyage root.go
-  Benefits: Single source of truth — plus de duplication
-  Tests: go build ./... && ./notion --help → plus de doublons
-  Commit: refactor: remove hand-written commands, all generated
+- [ ] HA06 Demander confirmation gum confirm avant DELETE et in_trash=true
+  Depends on: HA01
+  Changes: gen/templates/command.go.tmpl (detect DELETE), internal/tui/confirm.go
+  Benefits: Protection contre les suppressions accidentelles en mode interactif
+  Tests: `./notion blocks delete-a-block <id>` → "Supprimer ce bloc ? [y/N]" ; --yes bypasse
+  Commit: feat: gum confirm prompt before destructive operations
 
-- [x] T10 Documenter résultats de tests et recommandations
-  Depends on: T09
-  Changes: TESTING.md, DESIGN.md
-  Benefits: Traçabilité des décisions et des limitations connues
-  Tests: Lecture humaine
-  Commit: docs: add test results and reliability recommendations
+### HA07 — Formatage de la réponse : tables et résumés adaptés par ressource
 
-## Phase 4 — Fiabilité (issues R1–R7)
+- [ ] HA07 Formater les listes (users, databases, pages) en table gum
+  Depends on: HA02
+  Changes: internal/render/table.go (nouveau), internal/render/render.go
+  Benefits: `./notion users get-users` → table avec colonnes Name / Type / ID plutôt que JSON brut
+  Tests: `./notion users get-users` → table ; `./notion users get-users -f json` → JSON brut
+  Commit: feat: render list responses as gum tables in human mode
 
-- [x] T13 R1 — Améliorer les messages d'erreur data-sources
-  Depends on: T09
-  Changes: internal/client/client.go (errorHint), cmd/generated/data_sources.go (hint ajouté)
-  Benefits: L'utilisateur comprend immédiatement qu'il faut un data_source_id ≠ database_id
-  Tests: ./notion data-sources retrieve-a-data-source <database_id> → message d'erreur explicite
-  Commit: fix: improve error hint for data-sources ID confusion
+### HA08 — Commande notion auth login interactive avec gum
 
-- [x] T14 R2 — Supporter --body @file.json et --body - (stdin)
-  Depends on: T09
-  Changes: cmd/generated/helpers.go (resolveBody helper), gen/templates/command.go.tmpl
-  Benefits: Fini les escaping hell en shell — on passe un fichier JSON directement
-  Tests: echo '{"query":"test"}' | ./notion search post-search --body - → fonctionne
-  Commit: feat: support --body @file and --body - for stdin input
+- [ ] HA08 Wizard d'authentification guidé (gum input pour le token)
+  Depends on: HA01
+  Changes: cmd/auth.go (déjà présent ?), internal/tui/auth_wizard.go
+  Benefits: `./notion auth login` sans flag → prompt gum masqué pour le token
+  Tests: `./notion auth login` → prompt token masqué ; token stocké dans config
+  Commit: feat: interactive gum auth login wizard
 
-- [x] T15 R3 — Mécanisme "manually implemented" dans le générateur
-  Depends on: T06
-  Changes: gen/generate.go (liste d'exclusion), gen/templates/command.go.tmpl
-  Benefits: just generate ne peut plus écraser file_upload_manual.go ni d'autres overrides
-  Tests: just generate && ls cmd/generated/file_upload_manual.go → toujours présent et intact
-  Commit: feat: add manual-override exclusion list to generator
+---
 
-- [x] T16 R4 — Flag --field pour extraire un champ top-level
-  Depends on: T09
-  Changes: internal/render/render.go (Output accepte --field), cmd/root.go (flag global)
-  Benefits: notion file-uploads create-file --body '{...}' --field id → juste l'ID
-  Tests: ./notion users get-self --field name → "cli-demo-test"
-  Commit: feat: add --field flag to extract top-level JSON field
+## Phase B — CLI Agent (AB01–AB05)
 
-- [x] T17 R5 — Clarifier complete-file-upload (>20MB only)
-  Depends on: T09
-  Changes: cmd/generated/file_upload_manual.go (Short + Long améliorés)
-  Benefits: L'utilisateur ne perd plus de temps à tester une commande qui ne s'applique pas
-  Tests: ./notion file-uploads complete-file-upload --help → description claire
-  Commit: docs: clarify complete-file-upload is for multi-part uploads only
+### AB01 — Flag global `--agent` et variable NOTION_AGENT
 
-- [x] T18 R6 — Flag --dry-run global
-  Depends on: T09
-  Changes: internal/client/client.go (dry-run mode), cmd/root.go (flag global)
-  Benefits: Voir la requête HTTP avant de l'exécuter — essentiel pour le debug
-  Tests: ./notion blocks delete-a-block <id> --dry-run → affiche DELETE /v1/blocks/<id> sans appeler l'API
-  Commit: feat: add --dry-run flag to preview HTTP requests
+- [ ] AB01 Ajouter le flag --agent (ou env NOTION_AGENT=1) qui bascule tout le rendu
+  Depends on: -
+  Changes: cmd/root.go, internal/render/render.go, internal/tui/mode.go (nouveau)
+  Benefits: Un seul flag change tout le comportement ; compatible scripts et MCP servers
+  Tests: `NOTION_AGENT=1 ./notion users get-self` → JSON minifié une ligne
+  Commit: feat: add --agent flag and NOTION_AGENT env for AI mode
 
-- [x] T19 R7 — Flag --help-body avec exemple depuis la spec
-  Depends on: T06
-  Changes: gen/templates/command.go.tmpl (--help-body flag), gen/parser.go (exemples extraits)
-  Benefits: Chaque commande est auto-documentée — plus de trial & error sur le format du body
-  Tests: ./notion pages update-page-markdown <id> --help-body → affiche un exemple JSON valide
-  Commit: feat: add --help-body flag showing example request body from spec
+### AB02 — Sortie JSON minifiée (zéro whitespace, zéro couleur)
 
-## Phase 5 — Évolutivité
+- [ ] AB02 En mode agent : json.Marshal compact sans indentation ni ANSI
+  Depends on: AB01
+  Changes: internal/render/render.go (branche agent dans OutputField)
+  Benefits: Réduction ~40% des tokens par rapport au JSON indenté
+  Tests: `./notion --agent users get-self | wc -c` < `./notion users get-self | wc -c`
+  Commit: feat: minified JSON output in agent mode
 
-- [ ] T11 GitHub Action : auto-update spec + PR
-  Depends on: T19
-  Changes: .github/workflows/update-spec.yml
-  Benefits: Détecte automatiquement les nouvelles versions de la spec Notion et ouvre une PR
-  Tests: Déclencher manuellement via gh workflow run update-spec.yml
-  Commit: ci: add weekly spec auto-update workflow
+### AB03 — Messages d'erreur ultra-courts en mode agent
 
-- [ ] T12 Ajouter la commande notion api générique (escape hatch)
-  Depends on: T08
-  Changes: cmd/api.go (déjà présent, non supprimé)
-  Benefits: Appeler n'importe quel endpoint non couvert sans recompiler
-  Tests: ./notion api GET /v1/users/me → JSON de l'utilisateur courant
-  Commit: feat: restore generic api escape hatch command
+- [ ] AB03 En mode agent : erreurs au format `ERR:<code>:<message_court>` sans hint
+  Depends on: AB01
+  Changes: internal/client/client.go (errorHint skipped), internal/render/errors.go
+  Benefits: L'AI reçoit un code parsable, pas un paragraphe explicatif
+  Tests: `./notion --agent pages retrieve-a-page invalid-id` → `ERR:object_not_found:page not found`
+  Commit: feat: terse error format in agent mode
+
+### AB04 — Suppression des spinners, confirmations et wizards en mode agent
+
+- [ ] AB04 Désactiver toute sortie stderr décorative en mode agent
+  Depends on: AB01, HA03, HA06
+  Changes: internal/tui/gum.go (IsAgentMode guard), internal/tui/spinner.go, internal/tui/confirm.go
+  Benefits: Zéro bruit parasite — stdout = données pures, stderr = vide
+  Tests: `./notion --agent blocks delete-a-block <id> 2>/dev/null` → pas de confirm, exécution directe
+  Commit: feat: suppress all decorative output in agent mode
+
+### AB05 — Flag --fields (liste CSV) pour filtrer les clés de la réponse
+
+- [ ] AB05 Ajouter --fields id,name,url pour retourner un sous-objet JSON minimal
+  Depends on: AB02
+  Changes: internal/render/render.go (OutputFields multi-key), cmd/root.go (flag global)
+  Benefits: L'AI ne reçoit que ce dont elle a besoin — économie maximale de tokens
+  Tests: `./notion --agent users get-self --fields id,name` → `{"id":"...","name":"..."}`
+  Commit: feat: --fields flag to select response keys in agent mode
+
+---
+
+## Phase C — Benchmark (BM01–BM03)
+
+Mesures réelles de tokens sur un corpus fixe de 10 appels API représentatifs.
+Outil de comptage : `tiktoken` (cl100k_base, modèle GPT-4/Claude compatible) via script Python.
+
+### BM01 — Corpus de référence et script de mesure
+
+- [ ] BM01 Créer le corpus de benchmark et le script de comptage de tokens
+  Depends on: -
+  Changes: bench/corpus.sh (10 appels API fixés), bench/count_tokens.py (tiktoken), bench/README.md
+  Benefits: Baseline reproductible — chaque PR peut comparer ses chiffres au même corpus
+  Tests: `just bench` → tableau CSV `mode,command,bytes,tokens` dans bench/results/baseline.csv
+  Commit: dev: add token benchmark corpus and counting script
+
+### BM02 — Mesure comparative human vs agent sur le corpus
+
+- [ ] BM02 Exécuter le corpus en mode human et agent, générer un rapport diff
+  Depends on: BM01, AB02, AB05
+  Changes: bench/compare.sh, bench/results/report.md (généré)
+  Benefits: Chiffres réels : bytes économisés, tokens économisés, % de réduction par commande
+  Tests: `just bench-compare` → report.md avec tableau avant/après pour les 10 commandes
+  Commit: dev: add human vs agent benchmark comparison report
+
+### BM03 — Intégration du benchmark dans le justfile + CI check
+
+- [ ] BM03 Ajouter `just bench` dans le justfile et un check de régression (tokens ne doivent pas augmenter)
+  Depends on: BM02
+  Changes: justfile (cible bench, bench-compare), bench/check_regression.py
+  Benefits: Toute modif du renderer qui augmente les tokens en mode agent est détectée automatiquement
+  Tests: `just bench` passe ; modifier render.go pour ajouter un espace → `just bench` échoue
+  Commit: dev: add bench target to justfile with regression guard
