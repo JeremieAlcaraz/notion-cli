@@ -17,14 +17,18 @@ func StartSpinner(title string) func() {
 	}
 
 	done := make(chan struct{})
+	stopped := make(chan struct{})
 
 	go func() {
+		defer close(stopped)
 		i := 0
+		ticker := time.NewTicker(80 * time.Millisecond)
+		defer ticker.Stop()
 		for {
 			select {
 			case <-done:
 				return
-			case <-time.After(80 * time.Millisecond):
+			case <-ticker.C:
 				fmt.Fprintf(os.Stderr, "\r%s %s ", spinnerFrames[i%len(spinnerFrames)], title)
 				i++
 			}
@@ -33,7 +37,7 @@ func StartSpinner(title string) func() {
 
 	return func() {
 		close(done)
-		// Clear the spinner line
+		<-stopped // wait for goroutine to exit before clearing
 		fmt.Fprintf(os.Stderr, "\r\033[K")
 	}
 }

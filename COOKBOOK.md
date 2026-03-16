@@ -424,60 +424,35 @@ echo "Upload slot : $UPLOAD_ID"
 
 ### Injecter une image uploadée dans un bloc
 ```bash
-# 1. Uploader l'image et récupérer son ID
-IMG_UPLOAD_ID=$(./notion file-uploads upload-file img-to-send/img.jpg --field id 2>/dev/null || \
-  ./notion file-uploads upload-file img-to-send/img.jpg | grep '"id"' | head -1 | tr -d ' "id:,')
+# 1. Uploader l'image — progress sur stderr, JSON sur stdout
+IMG_UPLOAD_ID=$(./notion file-uploads upload-file img-to-send/img.jpg 2>/dev/null \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
 
-# 2. L'injecter comme bloc image dans la page
-./notion blocks patch-block-children $PAGE_ID --body '{
-  "children": [{
-    "object": "block",
-    "type": "image",
-    "image": {
-      "type": "file_upload",
-      "file_upload": {"id": "'"$IMG_UPLOAD_ID"'"}
-    }
-  }]
-}'
+echo "Upload ID : $IMG_UPLOAD_ID"
+
+# 2. L'injecter comme bloc image (via fichier pour éviter les problèmes de quotes)
+cat > /tmp/image-block.json << EOF
+{"children":[{"object":"block","type":"image","image":{"type":"file_upload","file_upload":{"id":"$IMG_UPLOAD_ID"}}}]}
+EOF
+
+./notion blocks patch-block-children $PAGE_ID --body @/tmp/image-block.json
 ```
 
 ### Grille d'images 2×3 (column_list → column → image)
 ```bash
 # Uploader 6 fois la même image pour simuler une galerie
 for i in 1 2 3 4 5 6; do
-  IDS[$i]=$(./notion file-uploads upload-file img-to-send/img.jpg 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+  IDS[$i]=$(./notion file-uploads upload-file img-to-send/img.jpg 2>/dev/null \
+    | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
   echo "Image $i : ${IDS[$i]}"
 done
 
-# Injecter en grille 2 colonnes × 3 images par colonne
-./notion blocks patch-block-children $PAGE_ID --body '{
-  "children": [{
-    "object": "block",
-    "type": "column_list",
-    "column_list": {
-      "children": [
-        {
-          "object": "block",
-          "type": "column",
-          "column": {"children": [
-            {"object":"block","type":"image","image":{"type":"file_upload","file_upload":{"id":"'"${IDS[1]}"'"}}},
-            {"object":"block","type":"image","image":{"type":"file_upload","file_upload":{"id":"'"${IDS[2]}"'"}}},
-            {"object":"block","type":"image","image":{"type":"file_upload","file_upload":{"id":"'"${IDS[3]}"'"}}}
-          ]}
-        },
-        {
-          "object": "block",
-          "type": "column",
-          "column": {"children": [
-            {"object":"block","type":"image","image":{"type":"file_upload","file_upload":{"id":"'"${IDS[4]}"'"}}},
-            {"object":"block","type":"image","image":{"type":"file_upload","file_upload":{"id":"'"${IDS[5]}"'"}}},
-            {"object":"block","type":"image","image":{"type":"file_upload","file_upload":{"id":"'"${IDS[6]}"'"}}}
-          ]}
-        }
-      ]
-    }
-  }]
-}'
+# Injecter en grille 2 colonnes × 3 images par colonne (via fichier JSON)
+cat > /tmp/grid.json << EOF
+{"children":[{"object":"block","type":"column_list","column_list":{"children":[{"object":"block","type":"column","column":{"children":[{"object":"block","type":"image","image":{"type":"file_upload","file_upload":{"id":"${IDS[1]}"}}},{"object":"block","type":"image","image":{"type":"file_upload","file_upload":{"id":"${IDS[2]}"}}},{"object":"block","type":"image","image":{"type":"file_upload","file_upload":{"id":"${IDS[3]}"}}}]}},{"object":"block","type":"column","column":{"children":[{"object":"block","type":"image","image":{"type":"file_upload","file_upload":{"id":"${IDS[4]}"}}},{"object":"block","type":"image","image":{"type":"file_upload","file_upload":{"id":"${IDS[5]}"}}},{"object":"block","type":"image","image":{"type":"file_upload","file_upload":{"id":"${IDS[6]}"}}}]}}]}}]}
+EOF
+
+./notion blocks patch-block-children $PAGE_ID --body @/tmp/grid.json
 ```
 
 ---

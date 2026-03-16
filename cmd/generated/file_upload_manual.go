@@ -59,27 +59,27 @@ using the --page-id flag.`,
 				contentType = "application/octet-stream"
 			}
 
-			fmt.Printf("Uploading %s (%d bytes, %s)...\n", fileName, len(data), contentType)
+			fmt.Fprintf(os.Stderr, "Uploading %s (%d bytes, %s)...\n", fileName, len(data), contentType)
 
 			// Step 1: create file upload
 			uploadID, err := createFileUpload(token, fileName, contentType)
 			if err != nil {
 				return fmt.Errorf("create file upload: %w", err)
 			}
-			fmt.Printf("  Created upload: %s\n", uploadID)
+			fmt.Fprintf(os.Stderr, "  Created upload: %s\n", uploadID)
 
 			// Step 2: send file content (multipart)
 			if err := sendFileContent(token, uploadID, fileName, contentType, data); err != nil {
 				return fmt.Errorf("send file content: %w", err)
 			}
-			fmt.Println("  Sent file content ✓")
+			fmt.Fprintln(os.Stderr, "  Sent file content ✓")
 
 			// Step 3: retrieve final status
 			result, err := notionRequest("GET", fmt.Sprintf("/v1/file_uploads/%s", uploadID), token, nil)
 			if err != nil {
 				return fmt.Errorf("retrieve upload: %w", err)
 			}
-			fmt.Printf("  Status: %s ✓\n", result["status"])
+			fmt.Fprintf(os.Stderr, "  Status: %s ✓\n", result["status"])
 
 			// Step 4: attach to page if requested
 			if pageID != "" {
@@ -100,7 +100,7 @@ using the --page-id flag.`,
 				if err != nil {
 					return fmt.Errorf("attach to page: %w", err)
 				}
-				fmt.Printf("  Attached to page %s ✓\n", pageID)
+				fmt.Fprintf(os.Stderr, "  Attached to page %s ✓\n", pageID)
 			}
 
 			out, _ := json.MarshalIndent(result, "", "  ")
