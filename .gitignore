@@ -50,3 +50,6 @@ img-to-send/
 .vibe/
 .windsurf/
 .zencoder/
+bench/.venv/
+bench/results/raw/
+bench/results/tokens.csv

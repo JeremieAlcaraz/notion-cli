@@ -144,7 +144,7 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
 
 ### AB04 — Suppression des spinners, confirmations et wizards en mode agent
 
-- [ ] AB04 Désactiver toute sortie stderr décorative en mode agent
+- [x] AB04 Désactiver toute sortie stderr décorative en mode agent
   Depends on: AB01, HA03, HA06
   Changes: internal/tui/gum.go (IsAgentMode guard), internal/tui/spinner.go, internal/tui/confirm.go
   Benefits: Zéro bruit parasite — stdout = données pures, stderr = vide
@@ -153,7 +153,7 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
 
 ### AB05 — Flag --fields (liste CSV) pour filtrer les clés de la réponse
 
-- [ ] AB05 Ajouter --fields id,name,url pour retourner un sous-objet JSON minimal
+- [x] AB05 Ajouter --fields id,name,url pour retourner un sous-objet JSON minimal
   Depends on: AB02
   Changes: internal/render/render.go (OutputFields multi-key), cmd/root.go (flag global)
   Benefits: L'AI ne reçoit que ce dont elle a besoin — économie maximale de tokens
@@ -169,7 +169,7 @@ Outil de comptage : `tiktoken` (cl100k_base, modèle GPT-4/Claude compatible) vi
 
 ### BM01 — Corpus de référence et script de mesure
 
-- [ ] BM01 Créer le corpus de benchmark et le script de comptage de tokens
+- [x] BM01 Créer le corpus de benchmark et le script de comptage de tokens
   Depends on: -
   Changes: bench/corpus.sh (10 appels API fixés), bench/count_tokens.py (tiktoken), bench/README.md
   Benefits: Baseline reproductible — chaque PR peut comparer ses chiffres au même corpus
