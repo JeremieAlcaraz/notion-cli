@@ -126,7 +126,7 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
 
 ### AB02 — Sortie JSON minifiée (zéro whitespace, zéro couleur)
 
-- [ ] AB02 En mode agent : json.Marshal compact sans indentation ni ANSI
+- [x] AB02 En mode agent : json.Marshal compact sans indentation ni ANSI
   Depends on: AB01
   Changes: internal/render/render.go (branche agent dans OutputField)
   Benefits: Réduction ~40% des tokens par rapport au JSON indenté
@@ -135,7 +135,7 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
 
 ### AB03 — Messages d'erreur ultra-courts en mode agent
 
-- [ ] AB03 En mode agent : erreurs au format `ERR:<code>:<message_court>` sans hint
+- [x] AB03 En mode agent : erreurs au format `ERR:<code>:<message_court>` sans hint
   Depends on: AB01
   Changes: internal/client/client.go (errorHint skipped), internal/render/errors.go
   Benefits: L'AI reçoit un code parsable, pas un paragraphe explicatif
