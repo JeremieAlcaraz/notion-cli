@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/4ier/notion-cli/internal/tui"
 	"github.com/fatih/color"
 	"golang.org/x/term"
 )
@@ -58,6 +59,9 @@ func OutputField(data []byte, format, field string) error {
 	out, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err
+	}
+	if IsTTY() && tui.ColorJSON(out) {
+		return nil
 	}
 	fmt.Println(string(out))
 	return nil
