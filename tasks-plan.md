@@ -99,7 +99,7 @@ Objectif : réduire les tokens sans perte de données fonctionnelles, via des tr
 
 ### OA02 — --strip-meta : suppression des champs bruités
 
-- [ ] OA02 Supprimer les champs non-fonctionnels des réponses Notion
+- [x] OA02 Supprimer les champs non-fonctionnels des réponses Notion
   Depends on: -
   Changes: internal/render/strip.go (nouveau), internal/render/render.go, cmd/root.go (flag global)
   Fields supprimés: `request_id`, `created_by`, `last_edited_by`, `cover`, `icon`, `public_url`, `in_trash`, `archived` (si false)

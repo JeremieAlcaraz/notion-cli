@@ -15,6 +15,9 @@ import (
 // OutputFields is like OutputField but also supports --fields (CSV list of keys).
 // Priority: --fields > --field > auto render.
 func OutputFields(data []byte, format, field, fields string) error {
+	if stripMeta {
+		data = StripMetaBytes(data)
+	}
 	if fields != "" {
 		keys := strings.Split(fields, ",")
 		for i, k := range keys {
@@ -94,6 +97,9 @@ func Output(data []byte, format string) error {
 
 // OutputField is like Output but extracts a single top-level field when field != "".
 func OutputField(data []byte, format, field string) error {
+	if stripMeta {
+		data = StripMetaBytes(data)
+	}
 	// If --field is set, extract the top-level field and print its value raw.
 	if field != "" {
 		var obj map[string]interface{}
