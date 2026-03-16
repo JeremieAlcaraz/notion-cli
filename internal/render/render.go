@@ -18,6 +18,31 @@ func IsTTY() bool {
 // Output prints raw API response bytes in the requested format.
 // Used by generated commands that receive []byte from client.Get/Post/Patch/Delete.
 func Output(data []byte, format string) error {
+	return OutputField(data, format, "")
+}
+
+// OutputField is like Output but extracts a single top-level field when field != "".
+func OutputField(data []byte, format, field string) error {
+	// If --field is set, extract the top-level field and print its value raw.
+	if field != "" {
+		var obj map[string]interface{}
+		if err := json.Unmarshal(data, &obj); err != nil {
+			return fmt.Errorf("parse response: %w", err)
+		}
+		val, ok := obj[field]
+		if !ok {
+			return fmt.Errorf("field %q not found in response", field)
+		}
+		switch v := val.(type) {
+		case string:
+			fmt.Println(v)
+		default:
+			out, _ := json.MarshalIndent(v, "", "  ")
+			fmt.Println(string(out))
+		}
+		return nil
+	}
+
 	if format == "" {
 		if IsTTY() {
 			format = "table"
@@ -25,32 +50,16 @@ func Output(data []byte, format string) error {
 			format = "json"
 		}
 	}
-	switch format {
-	case "json":
-		var v interface{}
-		if err := json.Unmarshal(data, &v); err != nil {
-			fmt.Println(string(data))
-			return nil
-		}
-		out, err := json.MarshalIndent(v, "", "  ")
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(out))
-	default:
-		// For table/text/md: pretty-print JSON for now — per-resource renderers
-		// can be added incrementally without touching generated code.
-		var v interface{}
-		if err := json.Unmarshal(data, &v); err != nil {
-			fmt.Println(string(data))
-			return nil
-		}
-		out, err := json.MarshalIndent(v, "", "  ")
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(out))
+	var v interface{}
+	if err := json.Unmarshal(data, &v); err != nil {
+		fmt.Println(string(data))
+		return nil
 	}
+	out, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(out))
 	return nil
 }
 

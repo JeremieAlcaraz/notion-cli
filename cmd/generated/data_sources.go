@@ -52,7 +52,8 @@ func newCreateADatabaseCmd() *cobra.Command {
 			}
 
 			format, _ := cmd.Flags().GetString("format")
-			return render.Output(data, format)
+			field, _ := cmd.Flags().GetString("field")
+			return render.OutputField(data, format, field)
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
@@ -88,7 +89,8 @@ func newRetrieveADataSourceCmd() *cobra.Command {
 			}
 
 			format, _ := cmd.Flags().GetString("format")
-			return render.Output(data, format)
+			field, _ := cmd.Flags().GetString("field")
+			return render.OutputField(data, format, field)
 		},
 	}
 
@@ -134,7 +136,8 @@ func newUpdateADataSourceCmd() *cobra.Command {
 			}
 
 			format, _ := cmd.Flags().GetString("format")
-			return render.Output(data, format)
+			field, _ := cmd.Flags().GetString("field")
+			return render.OutputField(data, format, field)
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
@@ -191,7 +194,8 @@ func newPostDatabaseQueryCmd() *cobra.Command {
 			}
 
 			format, _ := cmd.Flags().GetString("format")
-			return render.Output(data, format)
+			field, _ := cmd.Flags().GetString("field")
+			return render.OutputField(data, format, field)
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
@@ -246,7 +250,8 @@ func newListDataSourceTemplatesCmd() *cobra.Command {
 			}
 
 			format, _ := cmd.Flags().GetString("format")
-			return render.Output(data, format)
+			field, _ := cmd.Flags().GetString("field")
+			return render.OutputField(data, format, field)
 		},
 	}
 	cmd.Flags().StringVar(&flagName, "name", "", "Filter templates by name (case-insensitive substring match).")
