@@ -7,6 +7,7 @@ package generated
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/4ier/notion-cli/internal/tui"
 	"strings"
 
 	"github.com/4ier/notion-cli/internal/client"
@@ -83,12 +84,7 @@ func newRetrieveADataSourceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-a-data-source <data_source_id>",
 		Short: "Retrieve a data source",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -96,6 +92,18 @@ func newRetrieveADataSourceCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("data_source_id: ", "Enter data_source_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: data_source_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/data_sources/{data_source_id}"
@@ -129,12 +137,7 @@ func newUpdateADataSourceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-a-data-source <data_source_id>",
 		Short: "Update a data source",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
 				fmt.Println("Example --body JSON for update-a-data-source:")
@@ -153,6 +156,18 @@ func newUpdateADataSourceCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("data_source_id: ", "Enter data_source_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: data_source_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/data_sources/{data_source_id}"
@@ -199,12 +214,7 @@ func newPostDatabaseQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "post-database-query <data_source_id>",
 		Short: "Query a data source",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
 				fmt.Println("Example --body JSON for post-database-query:")
@@ -224,6 +234,18 @@ func newPostDatabaseQueryCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("data_source_id: ", "Enter data_source_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: data_source_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/data_sources/{data_source_id}/query"
@@ -281,12 +303,7 @@ func newListDataSourceTemplatesCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list-data-source-templates <data_source_id>",
 		Short: "List templates in a data source",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -294,6 +311,18 @@ func newListDataSourceTemplatesCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("data_source_id: ", "Enter data_source_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: data_source_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/data_sources/{data_source_id}/templates"

@@ -5,6 +5,8 @@
 package generated
 
 import (
+	"fmt"
+	"github.com/4ier/notion-cli/internal/tui"
 	"strings"
 
 	"github.com/4ier/notion-cli/internal/client"
@@ -113,12 +115,7 @@ func newGetUserCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get-user <user_id>",
 		Short: "Retrieve a user",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -126,6 +123,18 @@ func newGetUserCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("user_id: ", "Enter user_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: user_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/users/{user_id}"

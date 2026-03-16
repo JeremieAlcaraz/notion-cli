@@ -29,15 +29,25 @@ func (d TemplateData) NeedsJSON() bool {
 	return false
 }
 
-// NeedsFmt returns true if any operation needs fmt (body error formatting).
+// NeedsFmt returns true if any operation needs fmt (body error or path param error).
 func (d TemplateData) NeedsFmt() bool {
-	return d.NeedsJSON()
+	return d.NeedsJSON() || d.NeedsPathParams()
 }
 
 // NeedsStrings returns true if any operation has path or query params.
 func (d TemplateData) NeedsStrings() bool {
 	for _, op := range d.Operations {
 		if len(op.PathParams()) > 0 || len(op.QueryParams()) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// NeedsPathParams returns true if any operation has path params (needs tui wizard).
+func (d TemplateData) NeedsPathParams() bool {
+	for _, op := range d.Operations {
+		if len(op.PathParams()) > 0 {
 			return true
 		}
 	}

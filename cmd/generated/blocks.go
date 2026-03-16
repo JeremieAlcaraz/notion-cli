@@ -7,6 +7,7 @@ package generated
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/4ier/notion-cli/internal/tui"
 	"strings"
 
 	"github.com/4ier/notion-cli/internal/client"
@@ -21,12 +22,7 @@ func newDeleteABlockCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete-a-block <block_id>",
 		Short: "Delete a block",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -34,6 +30,18 @@ func newDeleteABlockCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("block_id: ", "Enter block_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: block_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/blocks/{block_id}"
@@ -66,12 +74,7 @@ func newRetrieveABlockCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-a-block <block_id>",
 		Short: "Retrieve a block",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -79,6 +82,18 @@ func newRetrieveABlockCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("block_id: ", "Enter block_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: block_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/blocks/{block_id}"
@@ -112,12 +127,7 @@ func newUpdateABlockCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-a-block <block_id>",
 		Short: "Update a block",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
 				fmt.Println("Example --body JSON for update-a-block:")
@@ -130,6 +140,18 @@ func newUpdateABlockCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("block_id: ", "Enter block_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: block_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/blocks/{block_id}"
@@ -176,12 +198,7 @@ func newGetBlockChildrenCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get-block-children <block_id>",
 		Short: "Retrieve block children",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -189,6 +206,18 @@ func newGetBlockChildrenCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("block_id: ", "Enter block_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: block_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/blocks/{block_id}/children"
@@ -236,12 +265,7 @@ func newPatchBlockChildrenCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "patch-block-children <block_id>",
 		Short: "Append block children",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
 				fmt.Println("Example --body JSON for patch-block-children:")
@@ -257,6 +281,18 @@ func newPatchBlockChildrenCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("block_id: ", "Enter block_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: block_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/blocks/{block_id}/children"

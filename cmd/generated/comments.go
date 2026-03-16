@@ -7,6 +7,7 @@ package generated
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/4ier/notion-cli/internal/tui"
 	"strings"
 
 	"github.com/4ier/notion-cli/internal/client"
@@ -138,12 +139,7 @@ func newRetrieveCommentCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-comment <comment_id>",
 		Short: "Retrieve a comment",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -151,6 +147,18 @@ func newRetrieveCommentCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("comment_id: ", "Enter comment_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: comment_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/comments/{comment_id}"

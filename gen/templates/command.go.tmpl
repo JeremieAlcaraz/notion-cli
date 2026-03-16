@@ -10,6 +10,8 @@ import (
 	{{- if .NeedsFmt}}"fmt"
 	{{end -}}
 	{{- if .NeedsStrings}}"strings"
+	{{end -}}
+	{{- if .NeedsPathParams}}"github.com/4ier/notion-cli/internal/tui"
 	{{end}}
 	"github.com/spf13/cobra"
 	"github.com/4ier/notion-cli/internal/client"
@@ -31,12 +33,7 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 		Use:   "{{.CobraUse}}{{range .PathParams}} <{{.Name}}>{{end}}",
 		Short: "{{.Summary}}",
 		{{- if gt (len .PathParams) 0}}
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs({{len .PathParams}})(cmd, args)
-		},
+		Args: cobra.ArbitraryArgs,
 		{{- else}}
 		Args:  cobra.NoArgs,
 		{{- end}}
@@ -54,6 +51,21 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+
+			{{- range $i, $p := .PathParams}}
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= {{$i}} {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("{{$p.Name}}: ", "Enter {{$p.Name}}…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: {{$p.Name}}")
+				}
+			}
+			{{- end}}
 
 			// Build path
 			path := "{{.Path}}"

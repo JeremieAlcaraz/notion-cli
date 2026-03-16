@@ -7,6 +7,7 @@ package generated
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/4ier/notion-cli/internal/tui"
 	"strings"
 
 	"github.com/4ier/notion-cli/internal/client"
@@ -144,12 +145,7 @@ func newRetrieveFileUploadCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-file-upload <file_upload_id>",
 		Short: "Retrieve a file upload",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -157,6 +153,18 @@ func newRetrieveFileUploadCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("file_upload_id: ", "Enter file_upload_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: file_upload_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/file_uploads/{file_upload_id}"

@@ -7,6 +7,7 @@ package generated
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/4ier/notion-cli/internal/tui"
 	"strings"
 
 	"github.com/4ier/notion-cli/internal/client"
@@ -86,12 +87,7 @@ func newRetrieveDatabaseCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-database <database_id>",
 		Short: "Retrieve a database",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -99,6 +95,18 @@ func newRetrieveDatabaseCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("database_id: ", "Enter database_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: database_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/databases/{database_id}"
@@ -132,12 +140,7 @@ func newUpdateDatabaseCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-database <database_id>",
 		Short: "Update a database",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
 				fmt.Println("Example --body JSON for update-database:")
@@ -159,6 +162,18 @@ func newUpdateDatabaseCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("database_id: ", "Enter database_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: database_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/databases/{database_id}"

@@ -7,6 +7,7 @@ package generated
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/4ier/notion-cli/internal/tui"
 	"strings"
 
 	"github.com/4ier/notion-cli/internal/client"
@@ -89,12 +90,7 @@ func newRetrieveAPageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-a-page <page_id>",
 		Short: "Retrieve a page",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -102,6 +98,18 @@ func newRetrieveAPageCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("page_id: ", "Enter page_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: page_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/pages/{page_id}"
@@ -145,12 +153,7 @@ func newPatchPageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "patch-page <page_id>",
 		Short: "Update page",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
 				fmt.Println("Example --body JSON for patch-page:")
@@ -171,6 +174,18 @@ func newPatchPageCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("page_id: ", "Enter page_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: page_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/pages/{page_id}"
@@ -216,12 +231,7 @@ func newRetrievePageMarkdownCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-page-markdown <page_id>",
 		Short: "Retrieve a page as markdown",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -229,6 +239,18 @@ func newRetrievePageMarkdownCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("page_id: ", "Enter page_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: page_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/pages/{page_id}/markdown"
@@ -272,12 +294,7 @@ func newUpdatePageMarkdownCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-page-markdown <page_id>",
 		Short: "Update a page's content as markdown",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
 				fmt.Println("Example --body JSON for update-page-markdown:")
@@ -290,6 +307,18 @@ func newUpdatePageMarkdownCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("page_id: ", "Enter page_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: page_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/pages/{page_id}/markdown"
@@ -335,12 +364,7 @@ func newMovePageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "move-page <page_id>",
 		Short: "Move a page",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
 				fmt.Println("Example --body JSON for move-page:")
@@ -355,6 +379,18 @@ func newMovePageCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("page_id: ", "Enter page_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: page_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/pages/{page_id}/move"
@@ -401,12 +437,7 @@ func newRetrieveAPagePropertyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-a-page-property <page_id> <property_id>",
 		Short: "Retrieve a page property item",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(2)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -414,6 +445,30 @@ func newRetrieveAPagePropertyCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("page_id: ", "Enter page_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: page_id")
+				}
+			}
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 1 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("property_id: ", "Enter property_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: property_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/pages/{page_id}/properties/{property_id}"
