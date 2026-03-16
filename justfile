@@ -44,3 +44,12 @@ bench: build
 bench-update-baseline:
     cp bench/results/tokens.csv bench/results/baseline.csv
     @echo "Baseline updated."
+
+# Run quality evaluation (baseline + optimized) with regression guard
+bench-quality: build
+    @echo "==> Running quality scenarios (baseline)..."
+    bench/.venv/bin/python bench/quality/eval.py --mode baseline --min-score 9
+    @echo "==> Running quality x efficiency report..."
+    bench/.venv/bin/python bench/quality/report.py
+    @echo "==> Quality gate check (optimized must score >= 8/10)..."
+    bench/.venv/bin/python bench/quality/eval.py --mode optimized --min-score 8

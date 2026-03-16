@@ -56,3 +56,4 @@ bench/results/tokens.csv
 bench/results/report.md
 bench/results/baseline.csv
 bench/quality/results/
+bench/quality/__pycache__/
