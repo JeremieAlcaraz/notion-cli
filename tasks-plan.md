@@ -117,7 +117,7 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
 
 ### AB01 — Flag global `--agent` et variable NOTION_AGENT
 
-- [ ] AB01 Ajouter le flag --agent (ou env NOTION_AGENT=1) qui bascule tout le rendu
+- [x] AB01 Ajouter le flag --agent (ou env NOTION_AGENT=1) qui bascule tout le rendu
   Depends on: -
   Changes: cmd/root.go, internal/render/render.go, internal/tui/mode.go (nouveau)
   Benefits: Un seul flag change tout le comportement ; compatible scripts et MCP servers
