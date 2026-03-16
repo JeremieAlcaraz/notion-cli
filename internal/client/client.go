@@ -10,6 +10,8 @@ import (
 	"net/textproto"
 	"strings"
 	"time"
+
+	"github.com/4ier/notion-cli/internal/tui"
 )
 
 const (
@@ -78,7 +80,9 @@ func (c *Client) do(method, path string, body interface{}) ([]byte, error) {
 		fmt.Printf("→ %s %s\n", method, url)
 	}
 
+	stopSpinner := tui.StartSpinner(method + " " + path)
 	resp, err := c.httpClient.Do(req)
+	stopSpinner()
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
