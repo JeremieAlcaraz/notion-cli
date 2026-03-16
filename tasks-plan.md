@@ -77,7 +77,7 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
 
 ### HA06 — Confirmation gum avant les opérations destructives
 
-- [ ] HA06 Demander confirmation gum confirm avant DELETE et in_trash=true
+- [x] HA06 Demander confirmation gum confirm avant DELETE et in_trash=true
   Depends on: HA01
   Changes: gen/templates/command.go.tmpl (detect DELETE), internal/tui/confirm.go
   Benefits: Protection contre les suppressions accidentelles en mode interactif
