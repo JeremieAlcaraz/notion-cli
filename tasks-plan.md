@@ -41,7 +41,7 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
 
 ### HA02 — Rendu JSON coloré avec jq
 
-- [ ] HA02 Piper la sortie JSON dans jq --color-output en mode human
+- [x] HA02 Piper la sortie JSON dans jq --color-output en mode human
   Depends on: HA01
   Changes: internal/render/render.go (OutputField), internal/tui/jq.go
   Benefits: Toute réponse API est lisible instantanément, sans install manuelle de jq
