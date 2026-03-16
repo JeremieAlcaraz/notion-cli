@@ -6,6 +6,7 @@ import (
 
 	"github.com/4ier/notion-cli/cmd/generated"
 	"github.com/4ier/notion-cli/internal/config"
+	"github.com/4ier/notion-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -14,6 +15,7 @@ var (
 	fieldFilter  string
 	debugMode    bool
 	dryRunFlag   bool
+	noGumFlag    bool
 	// Version is set by goreleaser ldflags
 	Version = "dev"
 )
@@ -25,9 +27,10 @@ var rootCmd = &cobra.Command{
 
 Notion CLI lets you manage pages, databases, blocks, and more
 without leaving your terminal. Built for developers and AI agents.`,
-	Version:       Version,
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	Version:          Version,
+	SilenceUsage:     true,
+	SilenceErrors:    true,
+	TraverseChildren: true,
 }
 
 func Execute() {
@@ -42,9 +45,12 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&fieldFilter, "field", "", "Extract a single top-level field from the JSON response")
 	rootCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "Show HTTP request/response details")
 	rootCmd.PersistentFlags().BoolVar(&dryRunFlag, "dry-run", false, "Print the HTTP request without executing it")
+	rootCmd.PersistentFlags().BoolVar(&noGumFlag, "no-gum", false, "Disable gum TUI enhancements (plain text output)")
 
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		generated.SetDryRun(dryRunFlag)
+		tui.SetNoGum(noGumFlag)
+		tui.WarnIfMissing()
 	}
 
 	rootCmd.AddCommand(authCmd)
