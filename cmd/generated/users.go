@@ -59,7 +59,8 @@ func newGetUsersCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&flagStartCursor, "start-cursor", "", "")
@@ -100,7 +101,8 @@ func newGetSelfCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 
@@ -152,7 +154,8 @@ func newGetUserCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 

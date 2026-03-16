@@ -12,6 +12,39 @@ import (
 	"golang.org/x/term"
 )
 
+// OutputFields is like OutputField but also supports --fields (CSV list of keys).
+// Priority: --fields > --field > auto render.
+func OutputFields(data []byte, format, field, fields string) error {
+	if fields != "" {
+		keys := strings.Split(fields, ",")
+		var obj map[string]interface{}
+		if err := json.Unmarshal(data, &obj); err != nil {
+			return fmt.Errorf("parse response: %w", err)
+		}
+		result := make(map[string]interface{}, len(keys))
+		for _, k := range keys {
+			k = strings.TrimSpace(k)
+			if v, ok := obj[k]; ok {
+				result[k] = v
+			}
+		}
+		// Always compact in agent mode, indented otherwise
+		var out []byte
+		var err error
+		if mode.IsAgent() {
+			out, err = json.Marshal(result)
+		} else {
+			out, err = json.MarshalIndent(result, "", "  ")
+		}
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(out))
+		return nil
+	}
+	return OutputField(data, format, field)
+}
+
 // IsTTY returns true if stdout is a terminal.
 func IsTTY() bool {
 	return term.IsTerminal(int(os.Stdout.Fd()))

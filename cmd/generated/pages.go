@@ -93,7 +93,8 @@ func newPostPageCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
@@ -157,7 +158,8 @@ func newRetrieveAPageCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&flagFilterProperties, "filter-properties", "", "Supply a list of property IDs to filter properties in the response. Note that if a page doesn't have a property, it won't be included in the filtered response.")
@@ -253,7 +255,8 @@ func newPatchPageCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
@@ -317,7 +320,8 @@ func newRetrievePageMarkdownCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&flagIncludeTranscript, "include-transcript", "", "Whether to include meeting note transcripts. Defaults to false. When true, full transcripts are included; when false, a placeholder with the meeting note URL is shown instead.")
@@ -397,7 +401,8 @@ func newUpdatePageMarkdownCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
@@ -482,7 +487,8 @@ func newMovePageCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
@@ -563,7 +569,8 @@ func newRetrieveAPagePropertyCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&flagStartCursor, "start-cursor", "", "")

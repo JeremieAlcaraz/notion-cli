@@ -64,7 +64,8 @@ func newListFileUploadsCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&flagStatus, "status", "", "If supplied, the endpoint will return file uploads with the specified status.")
@@ -145,7 +146,8 @@ func newCreateFileCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
@@ -199,7 +201,8 @@ func newRetrieveFileUploadCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 
