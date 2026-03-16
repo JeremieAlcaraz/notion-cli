@@ -44,13 +44,25 @@ func OutputField(data []byte, format, field string) error {
 		return nil
 	}
 
+	// Auto mode: try smart rendering first
 	if format == "" {
-		if IsTTY() {
-			format = "table"
-		} else {
-			format = "json"
+		// Lists → gum table
+		if isList(data) && RenderList(data) {
+			return nil
 		}
+		// Single objects → jq colored JSON
+		if IsTTY() {
+			var v interface{}
+			if err := json.Unmarshal(data, &v); err == nil {
+				out, err := json.MarshalIndent(v, "", "  ")
+				if err == nil && tui.ColorJSON(out) {
+					return nil
+				}
+			}
+		}
+		format = "json"
 	}
+
 	var v interface{}
 	if err := json.Unmarshal(data, &v); err != nil {
 		fmt.Println(string(data))
@@ -59,9 +71,6 @@ func OutputField(data []byte, format, field string) error {
 	out, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err
-	}
-	if IsTTY() && tui.ColorJSON(out) {
-		return nil
 	}
 	fmt.Println(string(out))
 	return nil
