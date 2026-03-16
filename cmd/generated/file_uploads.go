@@ -7,12 +7,11 @@ package generated
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/4ier/notion-cli/internal/tui"
-	"strings"
-
 	"github.com/4ier/notion-cli/internal/client"
 	"github.com/4ier/notion-cli/internal/render"
+	"github.com/4ier/notion-cli/internal/tui"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 // list-file-uploads — List file uploads
@@ -117,6 +116,23 @@ func newCreateFileCmd() *cobra.Command {
 				}
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
+				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("create-file", []tui.BodyField{
+					{Name: "content_type", Type: "string", Description: "MIME type of the file to be created. Recommended when sending the file in multiple parts. Must match the content type of the file that's sent, and the extension of the `filename` parameter if any.", Required: false},
+					{Name: "external_url", Type: "string", Description: "When `mode` is `external_url`, provide the HTTPS URL of a publicly accessible file to import into your workspace.", Required: false},
+					{Name: "filename", Type: "string", Description: "Name of the file to be created. Required when `mode` is `multi_part`. Otherwise optional, and used to override the filename. Must include an extension, or have one inferred from the `content_type` parameter.", Required: false},
+					{Name: "mode", Type: "string", Description: "How the file is being sent. Use `multi_part` for files larger than 20MB. Use `external_url` for files that are temporarily hosted publicly elsewhere. Default is `single_part`.", Required: false},
+					{Name: "number_of_parts", Type: "integer", Description: "When `mode` is `multi_part`, the number of parts you are uploading. This must match the number of parts as well as the final `part_number` you send.", Required: false},
+				})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
 				}
 			}
 			data, err := c.Post(path, bodyData)

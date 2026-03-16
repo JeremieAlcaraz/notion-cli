@@ -7,9 +7,9 @@ package generated
 import (
 	"encoding/json"
 	"fmt"
-
 	"github.com/4ier/notion-cli/internal/client"
 	"github.com/4ier/notion-cli/internal/render"
+	"github.com/4ier/notion-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -55,6 +55,23 @@ func newPostSearchCmd() *cobra.Command {
 				}
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
+				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("post-search", []tui.BodyField{
+					{Name: "filter", Type: "object", Description: "", Required: false},
+					{Name: "page_size", Type: "number", Description: "", Required: false},
+					{Name: "query", Type: "string", Description: "", Required: false},
+					{Name: "sort", Type: "object", Description: "", Required: false},
+					{Name: "start_cursor", Type: "string", Description: "", Required: false},
+				})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
 				}
 			}
 			data, err := c.Post(path, bodyData)

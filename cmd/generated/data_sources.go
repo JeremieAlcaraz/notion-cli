@@ -7,12 +7,11 @@ package generated
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/4ier/notion-cli/internal/tui"
-	"strings"
-
 	"github.com/4ier/notion-cli/internal/client"
 	"github.com/4ier/notion-cli/internal/render"
+	"github.com/4ier/notion-cli/internal/tui"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 // create-a-database — Create a data source
@@ -56,6 +55,22 @@ func newCreateADatabaseCmd() *cobra.Command {
 				}
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
+				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("create-a-database", []tui.BodyField{
+					{Name: "parent", Type: "", Description: "An object specifying the parent of the new data source to be created.", Required: true},
+					{Name: "properties", Type: "object", Description: "Property schema of data source.", Required: true},
+					{Name: "icon", Type: "", Description: "Page icon.", Required: false},
+					{Name: "title", Type: "array", Description: "Title of data source as it appears in Notion.", Required: false},
+				})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
 				}
 			}
 			data, err := c.Post(path, bodyData)
@@ -185,6 +200,23 @@ func newUpdateADataSourceCmd() *cobra.Command {
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("update-a-data-source", []tui.BodyField{
+					{Name: "icon", Type: "", Description: "Page icon.", Required: false},
+					{Name: "in_trash", Type: "boolean", Description: "Whether the database should be moved to or from the trash. If not provided, the trash status will not be updated.", Required: false},
+					{Name: "parent", Type: "", Description: "The parent of the data source, when moving it to a different database. If not provided, the parent will not be updated.", Required: false},
+					{Name: "properties", Type: "object", Description: "The property schema of the data source. The keys are property names or IDs, and the values are property configuration objects. Properties set to null will be removed.", Required: false},
+					{Name: "title", Type: "array", Description: "Title of data source as it appears in Notion.", Required: false},
+				})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
+				}
 			}
 			data, err := c.Patch(path, bodyData)
 			if err != nil {
@@ -271,6 +303,24 @@ func newPostDatabaseQueryCmd() *cobra.Command {
 				}
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
+				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("post-database-query", []tui.BodyField{
+					{Name: "filter", Type: "", Description: "", Required: false},
+					{Name: "in_trash", Type: "boolean", Description: "", Required: false},
+					{Name: "page_size", Type: "number", Description: "", Required: false},
+					{Name: "result_type", Type: "string", Description: "Optionally filter the results to only include pages or data sources. Regular, non-wiki databases only support page children. The default behavior is no result type filtering, in other words, returning both pages and data sources for wikis.", Required: false},
+					{Name: "sorts", Type: "array", Description: "", Required: false},
+					{Name: "start_cursor", Type: "string", Description: "", Required: false},
+				})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
 				}
 			}
 			data, err := c.Post(path, bodyData)

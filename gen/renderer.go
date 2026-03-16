@@ -29,9 +29,9 @@ func (d TemplateData) NeedsJSON() bool {
 	return false
 }
 
-// NeedsFmt returns true if any operation needs fmt (body error or path param error).
+// NeedsFmt returns true if any operation needs fmt.
 func (d TemplateData) NeedsFmt() bool {
-	return d.NeedsJSON() || d.NeedsPathParams()
+	return d.NeedsJSON() || d.NeedsPathParams() || d.NeedsStrings()
 }
 
 // NeedsStrings returns true if any operation has path or query params.

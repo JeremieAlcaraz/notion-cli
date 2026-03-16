@@ -7,12 +7,11 @@ package generated
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/4ier/notion-cli/internal/tui"
-	"strings"
-
 	"github.com/4ier/notion-cli/internal/client"
 	"github.com/4ier/notion-cli/internal/render"
+	"github.com/4ier/notion-cli/internal/tui"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 // post-page — Create a page
@@ -61,6 +60,27 @@ func newPostPageCmd() *cobra.Command {
 				}
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
+				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("post-page", []tui.BodyField{
+					{Name: "children", Type: "array", Description: "", Required: false},
+					{Name: "content", Type: "array", Description: "", Required: false},
+					{Name: "cover", Type: "", Description: "", Required: false},
+					{Name: "icon", Type: "", Description: "", Required: false},
+					{Name: "markdown", Type: "string", Description: "Page content as Notion-flavored Markdown. Mutually exclusive with content/children.", Required: false},
+					{Name: "parent", Type: "", Description: "", Required: false},
+					{Name: "position", Type: "", Description: "", Required: false},
+					{Name: "properties", Type: "object", Description: "", Required: false},
+					{Name: "template", Type: "", Description: "", Required: false},
+				})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
 				}
 			}
 			data, err := c.Post(path, bodyData)
@@ -203,6 +223,25 @@ func newPatchPageCmd() *cobra.Command {
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("patch-page", []tui.BodyField{
+					{Name: "cover", Type: "", Description: "", Required: false},
+					{Name: "erase_content", Type: "boolean", Description: "Whether to erase all existing content from the page. When used with a template, the template content replaces the existing content. When used without a template, simply clears the page content.", Required: false},
+					{Name: "icon", Type: "", Description: "", Required: false},
+					{Name: "in_trash", Type: "boolean", Description: "", Required: false},
+					{Name: "is_locked", Type: "boolean", Description: "Whether the page should be locked from editing in the Notion app UI. If not provided, the locked state will not be updated.", Required: false},
+					{Name: "properties", Type: "object", Description: "", Required: false},
+					{Name: "template", Type: "", Description: "", Required: false},
+				})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
+				}
 			}
 			data, err := c.Patch(path, bodyData)
 			if err != nil {
@@ -336,6 +375,17 @@ func newUpdatePageMarkdownCmd() *cobra.Command {
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("update-page-markdown", []tui.BodyField{})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
+				}
 			}
 			data, err := c.Patch(path, bodyData)
 			if err != nil {
@@ -407,6 +457,19 @@ func newMovePageCmd() *cobra.Command {
 				}
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
+				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("move-page", []tui.BodyField{
+					{Name: "parent", Type: "", Description: "The new parent of the page.", Required: true},
+				})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
 				}
 			}
 			data, err := c.Post(path, bodyData)

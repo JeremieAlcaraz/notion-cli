@@ -11,8 +11,7 @@ import (
 	{{end -}}
 	{{- if .NeedsStrings}}"strings"
 	{{end -}}
-	{{- if .NeedsPathParams}}"github.com/4ier/notion-cli/internal/tui"
-	{{end}}
+	"github.com/4ier/notion-cli/internal/tui"
 	"github.com/spf13/cobra"
 	"github.com/4ier/notion-cli/internal/client"
 	"github.com/4ier/notion-cli/internal/render"
@@ -98,6 +97,21 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 				}
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
+				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("{{.OperationID}}", []tui.BodyField{
+					{{- range .RequestBody.Properties}}
+					{Name: {{printf "%q" .Name}}, Type: {{printf "%q" .Type}}, Description: {{printf "%q" .Description}}, Required: {{.Required}}},
+					{{- end}}
+				})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
 				}
 			}
 			data, err := c.{{httpMethod .Method}}(path, bodyData)

@@ -7,12 +7,11 @@ package generated
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/4ier/notion-cli/internal/tui"
-	"strings"
-
 	"github.com/4ier/notion-cli/internal/client"
 	"github.com/4ier/notion-cli/internal/render"
+	"github.com/4ier/notion-cli/internal/tui"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 // create-database — Create a database
@@ -59,6 +58,25 @@ func newCreateDatabaseCmd() *cobra.Command {
 				}
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
+				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("create-database", []tui.BodyField{
+					{Name: "parent", Type: "", Description: "The parent page or workspace where the database will be created.", Required: true},
+					{Name: "cover", Type: "", Description: "The cover image for the database.", Required: false},
+					{Name: "description", Type: "array", Description: "The description of the database.", Required: false},
+					{Name: "icon", Type: "", Description: "The icon for the database.", Required: false},
+					{Name: "initial_data_source", Type: "", Description: "Initial data source configuration for the database.", Required: false},
+					{Name: "is_inline", Type: "boolean", Description: "Whether the database should be displayed inline in the parent page. Defaults to false.", Required: false},
+					{Name: "title", Type: "array", Description: "The title of the database.", Required: false},
+				})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
 				}
 			}
 			data, err := c.Post(path, bodyData)
@@ -190,6 +208,26 @@ func newUpdateDatabaseCmd() *cobra.Command {
 				}
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
+				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("update-database", []tui.BodyField{
+					{Name: "cover", Type: "", Description: "The updated cover image for the database, if any. If not provided, the cover will not be updated.", Required: false},
+					{Name: "description", Type: "array", Description: "The updated description of the database, if any. If not provided, the description will not be updated.", Required: false},
+					{Name: "icon", Type: "", Description: "The updated icon for the database, if any. If not provided, the icon will not be updated.", Required: false},
+					{Name: "in_trash", Type: "boolean", Description: "Whether the database should be moved to or from the trash. If not provided, the trash status will not be updated.", Required: false},
+					{Name: "is_inline", Type: "boolean", Description: "Whether the database should be displayed inline in the parent page. If not provided, the inline status will not be updated.", Required: false},
+					{Name: "is_locked", Type: "boolean", Description: "Whether the database should be locked from editing in the Notion app UI. If not provided, the locked state will not be updated.", Required: false},
+					{Name: "parent", Type: "", Description: "The parent page or workspace to move the database to. If not provided, the database will not be moved.", Required: false},
+					{Name: "title", Type: "array", Description: "The updated title of the database, if any. If not provided, the title will not be updated.", Required: false},
+				})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
 				}
 			}
 			data, err := c.Patch(path, bodyData)

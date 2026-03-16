@@ -6,12 +6,11 @@ package generated
 
 import (
 	"fmt"
-	"github.com/4ier/notion-cli/internal/tui"
-	"strings"
-
 	"github.com/4ier/notion-cli/internal/client"
 	"github.com/4ier/notion-cli/internal/render"
+	"github.com/4ier/notion-cli/internal/tui"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 // get-users — List all users
