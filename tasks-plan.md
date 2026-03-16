@@ -59,7 +59,7 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
 
 ### HA04 — Wizard interactif pour les commandes sans argument
 
-- [ ] HA04 Lancer un wizard gum input/filter si un path-param est manquant
+- [x] HA04 Lancer un wizard gum input/filter si un path-param est manquant
   Depends on: HA01
   Changes: gen/templates/command.go.tmpl (wizard hook), internal/tui/wizard.go
   Benefits: `./notion pages retrieve-a-page` sans ID → gum input "Page ID :" plutôt qu'une erreur
