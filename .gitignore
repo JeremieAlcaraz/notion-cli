@@ -54,3 +54,4 @@ bench/.venv/
 bench/results/raw/
 bench/results/tokens.csv
 bench/results/report.md
+bench/results/baseline.csv

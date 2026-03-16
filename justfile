@@ -28,3 +28,19 @@ update-golden:
 
 # Build + run tests
 check: build test
+
+# Run token benchmark (corpus → count → compare → regression check)
+bench: build
+    @echo "==> Collecting API outputs..."
+    bash bench/corpus.sh
+    @echo "==> Counting tokens..."
+    bench/.venv/bin/python bench/count_tokens.py
+    @echo "==> Comparing human vs agent..."
+    bench/.venv/bin/python bench/compare.py
+    @echo "==> Checking regression..."
+    bench/.venv/bin/python bench/check_regression.py
+
+# Update benchmark baseline after intentional improvement
+bench-update-baseline:
+    cp bench/results/tokens.csv bench/results/baseline.csv
+    @echo "Baseline updated."

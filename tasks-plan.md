@@ -187,7 +187,7 @@ Outil de comptage : `tiktoken` (cl100k_base, modèle GPT-4/Claude compatible) vi
 
 ### BM03 — Intégration du benchmark dans le justfile + CI check
 
-- [ ] BM03 Ajouter `just bench` dans le justfile et un check de régression (tokens ne doivent pas augmenter)
+- [x] BM03 Ajouter `just bench` dans le justfile et un check de régression (tokens ne doivent pas augmenter)
   Depends on: BM02
   Changes: justfile (cible bench, bench-compare), bench/check_regression.py
   Benefits: Toute modif du renderer qui augmente les tokens en mode agent est détectée automatiquement
