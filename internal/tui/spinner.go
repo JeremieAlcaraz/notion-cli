@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/4ier/notion-cli/internal/mode"
 )
 
 var spinnerFrames = []string{"⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"}
@@ -12,7 +14,7 @@ var spinnerFrames = []string{"⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "�
 // Returns a stop function that clears the spinner line.
 // No-op if gum is disabled or stderr is not a TTY.
 func StartSpinner(title string) func() {
-	if noGum || !isTTY() {
+	if noGum || mode.IsAgent() || !isTTY() {
 		return func() {}
 	}
 

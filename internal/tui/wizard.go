@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/4ier/notion-cli/internal/mode"
 )
 
 // AskPassword prompts for a masked/hidden input using gum input --password.
@@ -53,7 +55,7 @@ func AskChoose(header string, options []string) (string, error) {
 // Falls back to a plain fmt.Scan if gum is unavailable.
 // Returns the trimmed input, or an error if the user cancelled.
 func AskInput(prompt, placeholder string) (string, error) {
-	if IsAvailable() && isTTY() {
+	if !mode.IsAgent() && IsAvailable() && isTTY() {
 		return gumInput(prompt, placeholder)
 	}
 	return plainInput(prompt)

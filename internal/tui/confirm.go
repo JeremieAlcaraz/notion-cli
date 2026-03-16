@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+
+	"github.com/4ier/notion-cli/internal/mode"
 )
 
 // Confirm asks the user to confirm a destructive action using gum confirm.
 // Returns true if confirmed, false if declined or gum unavailable.
 // If gum is unavailable, defaults to proceeding (non-interactive environments).
 func Confirm(prompt string) bool {
-	if !IsAvailable() || !isTTY() {
+	if mode.IsAgent() || !IsAvailable() || !isTTY() {
 		return true
 	}
 	cmd := exec.Command("gum", "confirm", prompt)

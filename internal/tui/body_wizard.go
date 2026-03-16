@@ -3,6 +3,8 @@ package tui
 import (
 	"fmt"
 	"strings"
+
+	"github.com/4ier/notion-cli/internal/mode"
 )
 
 // BodyField describes one field of a request body.
@@ -18,7 +20,7 @@ type BodyField struct {
 // Skips fields the user leaves blank (unless required).
 // Falls back to returning "" (caller must handle) if gum is unavailable.
 func AskBody(operationID string, fields []BodyField) (string, error) {
-	if !IsAvailable() || !isTTY() {
+	if mode.IsAgent() || !IsAvailable() || !isTTY() {
 		return "", nil
 	}
 
