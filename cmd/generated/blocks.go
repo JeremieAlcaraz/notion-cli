@@ -17,6 +17,7 @@ import (
 // delete-a-block — Delete a block
 // DELETE /v1/blocks/{block_id}
 func newDeleteABlockCmd() *cobra.Command {
+	var flagYes bool
 
 	cmd := &cobra.Command{
 		Use:   "delete-a-block <block_id>",
@@ -41,6 +42,16 @@ func newDeleteABlockCmd() *cobra.Command {
 					return fmt.Errorf("missing argument: block_id")
 				}
 			}
+			// Confirm before destructive operation
+			if !flagYes && !dryRunMode {
+				resource := "delete-a-block"
+				if len(args) > 0 {
+					resource = args[0]
+				}
+				if !tui.ConfirmDelete(resource) {
+					return fmt.Errorf("aborted")
+				}
+			}
 
 			// Build path
 			path := "/v1/blocks/{block_id}"
@@ -62,6 +73,7 @@ func newDeleteABlockCmd() *cobra.Command {
 			return render.OutputField(data, format, field)
 		},
 	}
+	cmd.Flags().BoolVar(&flagYes, "yes", false, "Skip confirmation prompt")
 
 	return cmd
 }

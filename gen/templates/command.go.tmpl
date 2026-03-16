@@ -27,6 +27,9 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 	{{- range .QueryParams}}
 	var flag{{pascal .Name}} string
 	{{- end}}
+	{{- if isDelete .Method}}
+	var flagYes bool
+	{{- end}}
 
 	cmd := &cobra.Command{
 		Use:   "{{.CobraUse}}{{range .PathParams}} <{{.Name}}>{{end}}",
@@ -62,6 +65,19 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 					args = append(args, val)
 				} else {
 					return fmt.Errorf("missing argument: {{$p.Name}}")
+				}
+			}
+			{{- end}}
+
+			{{- if isDelete .Method}}
+			// Confirm before destructive operation
+			if !flagYes && !dryRunMode {
+				resource := "{{.OperationID}}"
+				if len(args) > 0 {
+					resource = args[0]
+				}
+				if !tui.ConfirmDelete(resource) {
+					return fmt.Errorf("aborted")
 				}
 			}
 			{{- end}}
@@ -136,6 +152,9 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 	{{- if .HasBody}}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
 	cmd.Flags().Bool("help-body", false, "Print an example JSON body for this command and exit")
+	{{- end}}
+	{{- if isDelete .Method}}
+	cmd.Flags().BoolVar(&flagYes, "yes", false, "Skip confirmation prompt")
 	{{- end}}
 	{{- range .QueryParams}}
 	cmd.Flags().StringVar(&flag{{pascal .Name}}, "{{kebab .Name}}", "", "{{.Schema.Description}}")

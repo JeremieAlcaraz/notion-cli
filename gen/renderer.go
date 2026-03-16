@@ -85,8 +85,9 @@ var tmplFuncs = template.FuncMap{
 			return "Get"
 		}
 	},
-	"not": func(b bool) bool { return !b },
-	"gt": func(a, b int) bool { return a > b },
+	"not":      func(b bool) bool { return !b },
+	"gt":       func(a, b int) bool { return a > b },
+	"isDelete": func(method string) bool { return strings.ToUpper(method) == "DELETE" },
 }
 
 // RenderCommandFile renders command.go.tmpl for a single tag into w.
