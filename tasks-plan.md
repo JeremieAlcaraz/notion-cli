@@ -68,7 +68,7 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
 
 ### HA05 — Wizard pour la saisie du body JSON champ par champ
 
-- [ ] HA05 Proposer une saisie guidée des champs du body si --body est absent
+- [x] HA05 Proposer une saisie guidée des champs du body si --body est absent
   Depends on: HA04
   Changes: internal/tui/body_wizard.go, gen/parser.go (BodyProp déjà présents), gen/templates/command.go.tmpl
   Benefits: Plus besoin de mémoriser le format JSON — la CLI guide champ par champ
