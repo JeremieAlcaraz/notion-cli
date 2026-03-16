@@ -85,7 +85,7 @@ scenarios:
       - url         # pour référencer la page
       - parent      # pour navigation vers le parent
       - properties  # titre + propriétés métier
-      - archived    # pour savoir si la page est active
+      - in_trash    # pour savoir si la page est active (Notion retourne in_trash, pas archived)
     data_not_required:
       - created_time
       - created_by
@@ -94,13 +94,12 @@ scenarios:
       - icon
       - public_url
       - request_id
-      - in_trash
     success_criteria:
       - "La réponse contient 'id' non vide"
       - "La réponse contient 'url' non vide"
       - "La réponse contient 'parent' non vide"
       - "La réponse contient 'properties' non vide"
-      - "La réponse contient 'archived' (booléen)"
+      - "La réponse contient 'in_trash' (booléen)"
 
   - id: SC05
     description: "Lire le contenu textuel d'une page"
@@ -126,8 +125,8 @@ scenarios:
   - id: SC06
     description: "Créer une page avec titre et propriétés"
     task: "L'agent crée une nouvelle page dans un parent donné"
-    baseline_command: "notion --agent pages create-a-page --body '{\"parent\":{\"type\":\"workspace\",\"workspace\":true},\"properties\":{\"title\":{\"title\":[{\"text\":{\"content\":\"Test QP06\"}}]}}}'"
-    optimized_command: "notion --agent pages create-a-page --fields id,url --body '{\"parent\":{\"type\":\"workspace\",\"workspace\":true},\"properties\":{\"title\":{\"title\":[{\"text\":{\"content\":\"Test QP06\"}}]}}}'"
+    baseline_command: "notion --agent pages post-page --body '{\"parent\":{\"type\":\"page_id\",\"page_id\":\"32445368-aa31-80da-ad1a-f9d92a4737a0\"},\"properties\":{\"title\":{\"title\":[{\"text\":{\"content\":\"Test QP06\"}}]}}}'"
+    optimized_command: "notion --agent pages post-page --fields id,url --body '{\"parent\":{\"type\":\"page_id\",\"page_id\":\"32445368-aa31-80da-ad1a-f9d92a4737a0\"},\"properties\":{\"title\":{\"title\":[{\"text\":{\"content\":\"Test QP06\"}}]}}}'"
     data_required:
       - id   # pour référencer la page créée dans les appels suivants
       - url  # pour confirmation et référence
@@ -165,8 +164,8 @@ scenarios:
   - id: SC08
     description: "Lister les commentaires d'une page"
     task: "L'agent lit les commentaires pour prendre du contexte avant d'agir"
-    baseline_command: "notion --agent comments retrieve-comments --block-id 32445368-aa31-80da-ad1a-f9d92a4737a0"
-    optimized_command: "notion --agent comments retrieve-comments --block-id 32445368-aa31-80da-ad1a-f9d92a4737a0 --fields id,rich_text,created_time"
+    baseline_command: "notion --agent comments list-comments --block-id 32445368-aa31-80da-ad1a-f9d92a4737a0"
+    optimized_command: "notion --agent comments list-comments --block-id 32445368-aa31-80da-ad1a-f9d92a4737a0 --fields id,rich_text,created_time"
     data_required:
       - results[].id           # pour référencer un commentaire spécifique
       - results[].rich_text    # le texte du commentaire — c'est le contenu principal
@@ -185,8 +184,8 @@ scenarios:
   - id: SC09
     description: "Mettre à jour le titre d'une page existante"
     task: "L'agent modifie le titre d'une page après l'avoir créée"
-    baseline_command: "notion --agent pages update-page-properties 32445368-aa31-80da-ad1a-f9d92a4737a0 --body '{\"properties\":{\"title\":{\"title\":[{\"text\":{\"content\":\"Demo Page CLI (updated via CLI)\"}}]}}}'"
-    optimized_command: "notion --agent pages update-page-properties 32445368-aa31-80da-ad1a-f9d92a4737a0 --fields id,last_edited_time --body '{\"properties\":{\"title\":{\"title\":[{\"text\":{\"content\":\"Demo Page CLI (updated via CLI)\"}}]}}}'"
+    baseline_command: "notion --agent pages patch-page 32445368-aa31-80da-ad1a-f9d92a4737a0 --body '{\"properties\":{\"title\":{\"title\":[{\"text\":{\"content\":\"Demo Page CLI (updated via CLI)\"}}]}}}'"
+    optimized_command: "notion --agent pages patch-page 32445368-aa31-80da-ad1a-f9d92a4737a0 --fields id,last_edited_time --body '{\"properties\":{\"title\":{\"title\":[{\"text\":{\"content\":\"Demo Page CLI (updated via CLI)\"}}]}}}'"
     data_required:
       - id               # confirmation que c'est bien la bonne page
       - last_edited_time # confirmation que la mise à jour a eu lieu
