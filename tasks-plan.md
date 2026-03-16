@@ -86,7 +86,7 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
 
 ### HA07 — Formatage de la réponse : tables et résumés adaptés par ressource
 
-- [ ] HA07 Formater les listes (users, databases, pages) en table gum
+- [x] HA07 Formater les listes (users, databases, pages) en table gum
   Depends on: HA02
   Changes: internal/render/table.go (nouveau), internal/render/render.go
   Benefits: `./notion users get-users` → table avec colonnes Name / Type / ID plutôt que JSON brut
