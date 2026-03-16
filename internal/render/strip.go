@@ -10,18 +10,16 @@ func SetStripMeta(v bool) { stripMeta = v }
 // IsStripMeta returns true if --strip-meta is active.
 func IsStripMeta() bool { return stripMeta }
 
-// metaFields are Notion response fields that are never useful to an agent:
-// - request_id: varies per call, no semantic value
-// - created_by / last_edited_by: user objects rarely needed for decisions
-// - cover / icon: visual assets, irrelevant for data processing
+// metaFields are Notion response fields stripped by --strip-meta:
+// - request_id: Notion internal support ID, no semantic value for agents
+// - created_by / last_edited_by: authorship rarely needed for decisions
 // - public_url: almost always null
-// - in_trash / archived: stripped only when false (active objects)
+// Note: cover and icon are intentionally kept — agents may need them
+// for page appearance tasks (e.g. "set an icon", "read the cover").
 var metaFields = []string{
 	"request_id",
 	"created_by",
 	"last_edited_by",
-	"cover",
-	"icon",
 	"public_url",
 }
 
