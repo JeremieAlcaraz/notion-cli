@@ -29,6 +29,7 @@ func newCreateDatabaseCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/databases"
@@ -49,6 +50,9 @@ func newCreateDatabaseCmd() *cobra.Command {
 			data, err := c.Post(path, bodyData)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -75,6 +79,7 @@ func newRetrieveDatabaseCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/databases/{database_id}"
@@ -86,6 +91,9 @@ func newRetrieveDatabaseCmd() *cobra.Command {
 			data, err := c.Get(path)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -112,6 +120,7 @@ func newUpdateDatabaseCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/databases/{database_id}"
@@ -133,6 +142,9 @@ func newUpdateDatabaseCmd() *cobra.Command {
 			data, err := c.Patch(path, bodyData)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")

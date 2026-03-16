@@ -41,6 +41,7 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "{{.Path}}"
@@ -83,6 +84,9 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 			{{- end}}
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")

@@ -31,6 +31,7 @@ func newListCommentsCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/comments"
@@ -56,6 +57,9 @@ func newListCommentsCmd() *cobra.Command {
 			data, err := c.Get(path)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -85,6 +89,7 @@ func newCreateACommentCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/comments"
@@ -105,6 +110,9 @@ func newCreateACommentCmd() *cobra.Command {
 			data, err := c.Post(path, bodyData)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -131,6 +139,7 @@ func newRetrieveCommentCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/comments/{comment_id}"
@@ -142,6 +151,9 @@ func newRetrieveCommentCmd() *cobra.Command {
 			data, err := c.Get(path)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")

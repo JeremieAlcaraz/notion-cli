@@ -13,6 +13,7 @@ var (
 	outputFormat string
 	fieldFilter  string
 	debugMode    bool
+	dryRunFlag   bool
 	// Version is set by goreleaser ldflags
 	Version = "dev"
 )
@@ -40,6 +41,11 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "format", "f", "", "Output format: json, md, table, text (default: auto)")
 	rootCmd.PersistentFlags().StringVar(&fieldFilter, "field", "", "Extract a single top-level field from the JSON response")
 	rootCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "Show HTTP request/response details")
+	rootCmd.PersistentFlags().BoolVar(&dryRunFlag, "dry-run", false, "Print the HTTP request without executing it")
+
+	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		generated.SetDryRun(dryRunFlag)
+	}
 
 	rootCmd.AddCommand(authCmd)
 	rootCmd.AddCommand(apiCmd)

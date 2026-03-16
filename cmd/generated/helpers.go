@@ -12,6 +12,11 @@ import (
 	"github.com/4ier/notion-cli/internal/config"
 )
 
+var dryRunMode bool
+
+// SetDryRun enables or disables dry-run mode for all generated commands.
+func SetDryRun(v bool) { dryRunMode = v }
+
 // resolveBody resolves the --body flag value.
 //   - "--body -"         → reads from stdin
 //   - "--body @file.json" → reads from file

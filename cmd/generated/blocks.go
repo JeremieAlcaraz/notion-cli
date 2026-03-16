@@ -28,6 +28,7 @@ func newDeleteABlockCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/blocks/{block_id}"
@@ -39,6 +40,9 @@ func newDeleteABlockCmd() *cobra.Command {
 			data, err := c.Delete(path)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -64,6 +68,7 @@ func newRetrieveABlockCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/blocks/{block_id}"
@@ -75,6 +80,9 @@ func newRetrieveABlockCmd() *cobra.Command {
 			data, err := c.Get(path)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -101,6 +109,7 @@ func newUpdateABlockCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/blocks/{block_id}"
@@ -122,6 +131,9 @@ func newUpdateABlockCmd() *cobra.Command {
 			data, err := c.Patch(path, bodyData)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -150,6 +162,7 @@ func newGetBlockChildrenCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/blocks/{block_id}/children"
@@ -173,6 +186,9 @@ func newGetBlockChildrenCmd() *cobra.Command {
 			data, err := c.Get(path)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -201,6 +217,7 @@ func newPatchBlockChildrenCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/blocks/{block_id}/children"
@@ -222,6 +239,9 @@ func newPatchBlockChildrenCmd() *cobra.Command {
 			data, err := c.Patch(path, bodyData)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")

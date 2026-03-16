@@ -28,6 +28,7 @@ func newGetUsersCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/users"
@@ -50,6 +51,9 @@ func newGetUsersCmd() *cobra.Command {
 			data, err := c.Get(path)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -77,6 +81,7 @@ func newGetSelfCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/users/me"
@@ -87,6 +92,9 @@ func newGetSelfCmd() *cobra.Command {
 			data, err := c.Get(path)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -112,6 +120,7 @@ func newGetUserCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/users/{user_id}"
@@ -123,6 +132,9 @@ func newGetUserCmd() *cobra.Command {
 			data, err := c.Get(path)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")

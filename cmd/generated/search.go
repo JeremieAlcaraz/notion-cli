@@ -28,6 +28,7 @@ func newPostSearchCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/search"
@@ -48,6 +49,9 @@ func newPostSearchCmd() *cobra.Command {
 			data, err := c.Post(path, bodyData)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")

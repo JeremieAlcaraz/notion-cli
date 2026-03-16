@@ -22,6 +22,7 @@ type Client struct {
 	token      string
 	httpClient *http.Client
 	debug      bool
+	dryRun     bool
 }
 
 func New(token string) *Client {
@@ -35,6 +36,10 @@ func New(token string) *Client {
 
 func (c *Client) SetDebug(debug bool) {
 	c.debug = debug
+}
+
+func (c *Client) SetDryRun(dryRun bool) {
+	c.dryRun = dryRun
 }
 
 func (c *Client) do(method, path string, body interface{}) ([]byte, error) {
@@ -58,6 +63,15 @@ func (c *Client) do(method, path string, body interface{}) ([]byte, error) {
 	req.Header.Set("Notion-Version", NotionVersion)
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
+	}
+
+	if c.dryRun {
+		fmt.Printf("[dry-run] %s %s\n", method, url)
+		if body != nil {
+			data, _ := json.Marshal(body)
+			fmt.Printf("[dry-run] Body: %s\n", string(data))
+		}
+		return nil, nil
 	}
 
 	if c.debug {

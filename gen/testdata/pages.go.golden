@@ -29,6 +29,7 @@ func newPostPageCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/pages"
@@ -49,6 +50,9 @@ func newPostPageCmd() *cobra.Command {
 			data, err := c.Post(path, bodyData)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -76,6 +80,7 @@ func newRetrieveAPageCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/pages/{page_id}"
@@ -96,6 +101,9 @@ func newRetrieveAPageCmd() *cobra.Command {
 			data, err := c.Get(path)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -123,6 +131,7 @@ func newPatchPageCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/pages/{page_id}"
@@ -144,6 +153,9 @@ func newPatchPageCmd() *cobra.Command {
 			data, err := c.Patch(path, bodyData)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -171,6 +183,7 @@ func newRetrievePageMarkdownCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/pages/{page_id}/markdown"
@@ -191,6 +204,9 @@ func newRetrievePageMarkdownCmd() *cobra.Command {
 			data, err := c.Get(path)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -218,6 +234,7 @@ func newUpdatePageMarkdownCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/pages/{page_id}/markdown"
@@ -239,6 +256,9 @@ func newUpdatePageMarkdownCmd() *cobra.Command {
 			data, err := c.Patch(path, bodyData)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -266,6 +286,7 @@ func newMovePageCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/pages/{page_id}/move"
@@ -287,6 +308,9 @@ func newMovePageCmd() *cobra.Command {
 			data, err := c.Post(path, bodyData)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -315,6 +339,7 @@ func newRetrieveAPagePropertyCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/pages/{page_id}/properties/{property_id}"
@@ -339,6 +364,9 @@ func newRetrieveAPagePropertyCmd() *cobra.Command {
 			data, err := c.Get(path)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")

@@ -29,6 +29,7 @@ func newCreateADatabaseCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/data_sources"
@@ -49,6 +50,9 @@ func newCreateADatabaseCmd() *cobra.Command {
 			data, err := c.Post(path, bodyData)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -75,6 +79,7 @@ func newRetrieveADataSourceCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/data_sources/{data_source_id}"
@@ -86,6 +91,9 @@ func newRetrieveADataSourceCmd() *cobra.Command {
 			data, err := c.Get(path)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -112,6 +120,7 @@ func newUpdateADataSourceCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/data_sources/{data_source_id}"
@@ -133,6 +142,9 @@ func newUpdateADataSourceCmd() *cobra.Command {
 			data, err := c.Patch(path, bodyData)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
@@ -161,6 +173,7 @@ func newPostDatabaseQueryCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/data_sources/{data_source_id}/query"
@@ -192,6 +205,9 @@ func newPostDatabaseQueryCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
+			}
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
@@ -221,6 +237,7 @@ func newListDataSourceTemplatesCmd() *cobra.Command {
 				return err
 			}
 			c := client.New(token)
+			c.SetDryRun(dryRunMode)
 
 			// Build path
 			path := "/v1/data_sources/{data_source_id}/templates"
@@ -247,6 +264,9 @@ func newListDataSourceTemplatesCmd() *cobra.Command {
 			data, err := c.Get(path)
 			if err != nil {
 				return err
+			}
+			if data == nil {
+				return nil // dry-run: request was printed, nothing to output
 			}
 
 			format, _ := cmd.Flags().GetString("format")
