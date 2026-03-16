@@ -50,7 +50,7 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
 
 ### HA03 — Spinner gum pendant les requêtes HTTP
 
-- [ ] HA03 Afficher un spinner gum pendant chaque appel API
+- [x] HA03 Afficher un spinner gum pendant chaque appel API
   Depends on: HA01
   Changes: internal/client/client.go (do()), internal/tui/spinner.go
   Benefits: Feedback visuel immédiat — l'utilisateur sait que la CLI travaille
