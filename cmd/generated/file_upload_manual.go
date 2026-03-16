@@ -28,8 +28,18 @@ func newUploadFileCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "upload-file <file-path>",
-		Short: "Upload a file to Notion (create → send → complete)",
-		Args:  cobra.ExactArgs(1),
+		Short: "Upload a file to Notion (files up to 20MB)",
+		Long: `Upload a local file to Notion in one command (create → send → retrieve).
+
+Handles the full upload flow automatically for files up to 20 MB.
+For files larger than 20 MB, use the multi-part flow manually:
+  1. notion file-uploads create-file --body '{"name":"...","content_type":"..."}'
+  2. Send each part via the Notion API (split at 20 MB boundaries)
+  3. Finalize with POST /v1/file_uploads/{id}/complete
+
+Optionally attach the uploaded file to a Notion page as an image block
+using the --page-id flag.`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			filePath := args[0]
 
