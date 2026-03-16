@@ -126,6 +126,114 @@ func (c *Client) Get(path string) ([]byte, error) {
 	return c.do("GET", path, nil)
 }
 
+// GetAll fetches all pages of a paginated GET endpoint by following next_cursor.
+// Merges all results[] into a single list response.
+func (c *Client) GetAll(path string) ([]byte, error) {
+	return paginateGET(c, path)
+}
+
+// PostAll fetches all pages of a paginated POST endpoint (e.g. search, db query).
+// body must be a map — start_cursor is injected automatically on each page.
+func (c *Client) PostAll(path string, body map[string]interface{}) ([]byte, error) {
+	return paginatePOST(c, path, body)
+}
+
+func paginateGET(c *Client, basePath string) ([]byte, error) {
+	var allResults []interface{}
+	cursor := ""
+	pagesFetched := 0
+	sep := "?"
+	if strings.Contains(basePath, "?") {
+		sep = "&"
+	}
+
+	for {
+		path := basePath
+		if cursor != "" {
+			path = basePath + sep + "start_cursor=" + cursor
+		}
+		data, err := c.do("GET", path, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		var page map[string]interface{}
+		if err := json.Unmarshal(data, &page); err != nil {
+			return nil, err
+		}
+		pagesFetched++
+
+		if results, ok := page["results"].([]interface{}); ok {
+			allResults = append(allResults, results...)
+		}
+
+		hasMore, _ := page["has_more"].(bool)
+		if !hasMore {
+			break
+		}
+		cursor, _ = page["next_cursor"].(string)
+		if cursor == "" {
+			break
+		}
+	}
+
+	merged := map[string]interface{}{
+		"object":        "list",
+		"results":       allResults,
+		"has_more":      false,
+		"next_cursor":   nil,
+		"pages_fetched": pagesFetched,
+	}
+	return json.Marshal(merged)
+}
+
+func paginatePOST(c *Client, path string, body map[string]interface{}) ([]byte, error) {
+	var allResults []interface{}
+	pagesFetched := 0
+
+	// Work on a copy to avoid mutating the caller's map
+	reqBody := make(map[string]interface{}, len(body))
+	for k, v := range body {
+		reqBody[k] = v
+	}
+
+	for {
+		data, err := c.do("POST", path, reqBody)
+		if err != nil {
+			return nil, err
+		}
+
+		var page map[string]interface{}
+		if err := json.Unmarshal(data, &page); err != nil {
+			return nil, err
+		}
+		pagesFetched++
+
+		if results, ok := page["results"].([]interface{}); ok {
+			allResults = append(allResults, results...)
+		}
+
+		hasMore, _ := page["has_more"].(bool)
+		if !hasMore {
+			break
+		}
+		cursor, _ := page["next_cursor"].(string)
+		if cursor == "" {
+			break
+		}
+		reqBody["start_cursor"] = cursor
+	}
+
+	merged := map[string]interface{}{
+		"object":        "list",
+		"results":       allResults,
+		"has_more":      false,
+		"next_cursor":   nil,
+		"pages_fetched": pagesFetched,
+	}
+	return json.Marshal(merged)
+}
+
 func (c *Client) Post(path string, body interface{}) ([]byte, error) {
 	return c.do("POST", path, body)
 }

@@ -15,11 +15,12 @@ var (
 	outputFormat string
 	fieldFilter  string
 	fieldsFilter string
-	debugMode      bool
-	dryRunFlag     bool
-	noGumFlag      bool
-	agentFlag      bool
-	stripMetaFlag  bool
+	debugMode     bool
+	dryRunFlag    bool
+	noGumFlag     bool
+	agentFlag     bool
+	stripMetaFlag bool
+	allFlag       bool
 	// Version is set by goreleaser ldflags
 	Version = "dev"
 )
@@ -53,6 +54,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&noGumFlag, "no-gum", false, "Disable gum TUI enhancements (plain text output)")
 	rootCmd.PersistentFlags().BoolVar(&agentFlag, "agent", false, "Agent mode: minified JSON, no TUI, terse errors (also via NOTION_AGENT=1)")
 	rootCmd.PersistentFlags().BoolVar(&stripMetaFlag, "strip-meta", false, "Remove noisy Notion metadata fields (request_id, cover, icon, created_by...)")
+	rootCmd.PersistentFlags().BoolVar(&allFlag, "all", false, "Fetch all pages automatically (follow next_cursor until has_more=false)")
 
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		tui.InitAgentMode()            // check NOTION_AGENT env first
@@ -60,6 +62,7 @@ func init() {
 		tui.SetNoGum(noGumFlag)
 		render.SetStripMeta(stripMetaFlag)
 		generated.SetDryRun(dryRunFlag)
+		generated.SetFetchAll(allFlag)
 		tui.WarnIfMissing()
 	}
 

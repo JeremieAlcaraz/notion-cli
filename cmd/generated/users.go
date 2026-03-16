@@ -49,7 +49,12 @@ func newGetUsersCmd() *cobra.Command {
 			}
 
 			// Execute request
-			data, err := c.Get(path)
+			var data []byte
+			if fetchAll && "GET" == "GET" {
+				data, err = c.GetAll(path)
+			} else {
+				data, err = c.Get(path)
+			}
 			if err != nil {
 				return err
 			}
@@ -91,7 +96,12 @@ func newGetSelfCmd() *cobra.Command {
 			// Build query string
 
 			// Execute request
-			data, err := c.Get(path)
+			var data []byte
+			if fetchAll && "GET" == "GET" {
+				data, err = c.GetAll(path)
+			} else {
+				data, err = c.Get(path)
+			}
 			if err != nil {
 				return err
 			}
@@ -144,7 +154,12 @@ func newGetUserCmd() *cobra.Command {
 			// Build query string
 
 			// Execute request
-			data, err := c.Get(path)
+			var data []byte
+			if fetchAll && "GET" == "GET" {
+				data, err = c.GetAll(path)
+			} else {
+				data, err = c.Get(path)
+			}
 			if err != nil {
 				return err
 			}

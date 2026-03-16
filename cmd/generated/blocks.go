@@ -60,7 +60,12 @@ func newDeleteABlockCmd() *cobra.Command {
 			// Build query string
 
 			// Execute request
-			data, err := c.Delete(path)
+			var data []byte
+			if fetchAll && "DELETE" == "GET" {
+				data, err = c.GetAll(path)
+			} else {
+				data, err = c.Get(path)
+			}
 			if err != nil {
 				return err
 			}
@@ -114,7 +119,12 @@ func newRetrieveABlockCmd() *cobra.Command {
 			// Build query string
 
 			// Execute request
-			data, err := c.Get(path)
+			var data []byte
+			if fetchAll && "GET" == "GET" {
+				data, err = c.GetAll(path)
+			} else {
+				data, err = c.Get(path)
+			}
 			if err != nil {
 				return err
 			}
@@ -263,7 +273,12 @@ func newGetBlockChildrenCmd() *cobra.Command {
 			}
 
 			// Execute request
-			data, err := c.Get(path)
+			var data []byte
+			if fetchAll && "GET" == "GET" {
+				data, err = c.GetAll(path)
+			} else {
+				data, err = c.Get(path)
+			}
 			if err != nil {
 				return err
 			}

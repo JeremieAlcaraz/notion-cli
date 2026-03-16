@@ -134,7 +134,12 @@ func new{{pascal .OperationID}}Cmd() *cobra.Command {
 			{{- else if needsNilBody .Method}}
 			data, err := c.{{httpMethod .Method}}(path, nil)
 			{{- else}}
-			data, err := c.{{httpMethod .Method}}(path)
+			var data []byte
+			if fetchAll && "{{.Method}}" == "GET" {
+				data, err = c.GetAll(path)
+			} else {
+				data, err = c.Get(path)
+			}
 			{{- end}}
 			if err != nil {
 				return err

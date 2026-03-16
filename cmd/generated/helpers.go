@@ -13,9 +13,16 @@ import (
 )
 
 var dryRunMode bool
+var fetchAll bool
 
 // SetDryRun enables or disables dry-run mode for all generated commands.
 func SetDryRun(v bool) { dryRunMode = v }
+
+// SetFetchAll enables automatic pagination for all generated list commands.
+func SetFetchAll(v bool) { fetchAll = v }
+
+// FetchAll returns true if --all is active.
+func FetchAll() bool { return fetchAll }
 
 // resolveBody resolves the --body flag value.
 //   - "--body -"         → reads from stdin

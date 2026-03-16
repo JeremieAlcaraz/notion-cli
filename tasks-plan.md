@@ -155,7 +155,7 @@ Objectif : réduire les tokens sans perte de données fonctionnelles, via des tr
 
 ### OA06 — --all : pagination automatique
 
-- [ ] OA06 Boucler automatiquement sur les pages suivantes si has_more=true
+- [x] OA06 Boucler automatiquement sur les pages suivantes si has_more=true
   Depends on: -
   Changes: internal/client/client.go (paginate helper), cmd/root.go (flag global)
   Benefits: 1 appel agent au lieu de N ; zéro logique de boucle côté agent
