@@ -135,6 +135,16 @@ func OutputField(data []byte, format, field string) error {
 		return nil
 	}
 
+	// Markdown mode: convert Notion blocks to Markdown
+	if format == "md" {
+		md, err := BlocksToMarkdown(data)
+		if err == nil {
+			fmt.Println(md)
+			return nil
+		}
+		// Not a blocks response — fall through to normal rendering
+	}
+
 	// Auto mode: try smart rendering first
 	if format == "" {
 		// Lists → gum table

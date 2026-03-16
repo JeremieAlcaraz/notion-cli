@@ -138,7 +138,7 @@ Objectif : réduire les tokens sans perte de données fonctionnelles, via des tr
 
 ### OA05 — --format md pour les blocs (Markdown natif)
 
-- [ ] OA05 Convertir les blocs Notion en Markdown lisible
+- [x] OA05 Convertir les blocs Notion en Markdown lisible
   Depends on: -
   Changes: internal/render/markdown.go (nouveau)
   Blocs supportés: heading_1/2/3, paragraph, bulleted_list_item, numbered_list_item,
