@@ -22,7 +22,7 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
 
 ## Phases
 
-- **Phase A — CLI Human** (HA01–HA08) : gum, jq coloré, wizards interactifs
+- **Phase A — CLI Human** (HA01–HA09) : gum, jq coloré, wizards interactifs + validation
 - **Phase B — CLI Agent** (AB01–AB05) : mode minifié, JSON compact, erreurs codées
 - **Phase C — Benchmark** (BM01–BM03) : mesures réelles de tokens avant/après
 
@@ -101,6 +101,15 @@ En mode human (défaut), chaque commande peut lancer un wizard `gum` si aucun ar
   Benefits: `./notion auth login` sans flag → prompt gum masqué pour le token
   Tests: `./notion auth login` → prompt token masqué ; token stocké dans config
   Commit: feat: interactive gum auth login wizard
+
+### HA09 — Mini cookbook Human + validation manuelle
+
+- [ ] HA09 Écrire un mini cookbook dédié au mode human et attendre validation
+  Depends on: HA08
+  Changes: COOKBOOK-HUMAN.md (nouveau)
+  Benefits: Valider que l'UX human est cohérente et agréable avant d'attaquer la Phase B
+  Tests: Validation manuelle par l'utilisateur — toutes les commandes du cookbook passent
+  Commit: docs: add human mode cookbook for manual validation
 
 ---
 
