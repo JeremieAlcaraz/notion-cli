@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/4ier/notion-cli/cmd/generated"
-	"github.com/4ier/notion-cli/internal/config"
-	"github.com/4ier/notion-cli/internal/render"
-	"github.com/4ier/notion-cli/internal/tui"
+	"github.com/JeremieAlcaraz/notion-cli/cmd/generated"
+	"github.com/JeremieAlcaraz/notion-cli/internal/config"
+	"github.com/JeremieAlcaraz/notion-cli/internal/render"
+	"github.com/JeremieAlcaraz/notion-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -46,7 +46,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&outputFormat, "format", "f", "", "Output format: json, md, table, text (default: auto)")
+	rootCmd.PersistentFlags().StringVarP(&outputFormat, "format", "f", "", "Output format: json, md, ndjson, summary (default: auto)")
 	rootCmd.PersistentFlags().StringVar(&fieldFilter, "field", "", "Extract a single top-level field from the JSON response")
 	rootCmd.PersistentFlags().StringVar(&fieldsFilter, "fields", "", "Extract multiple fields as compact JSON, e.g. --fields id,name,url")
 	rootCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "Show HTTP request/response details")

@@ -12,13 +12,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/4ier/notion-cli/gen"
+	"github.com/JeremieAlcaraz/notion-cli/gen"
 )
 
 const (
 	specPath   = "spec/notion-openapi.json"
 	outputDir  = "cmd/generated"
-	modulePath = "github.com/4ier/notion-cli"
+	modulePath = "github.com/JeremieAlcaraz/notion-cli"
 )
 
 // manualFiles lists files in cmd/generated/ that must never be overwritten by the generator.

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/4ier/notion-cli/internal/tui"
+	"github.com/JeremieAlcaraz/notion-cli/internal/tui"
 )
 
 // isList returns true if the JSON data is a Notion list response.

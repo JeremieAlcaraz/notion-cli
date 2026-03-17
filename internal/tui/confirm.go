@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/4ier/notion-cli/internal/mode"
+	"github.com/JeremieAlcaraz/notion-cli/internal/mode"
 )
 
 // Confirm asks the user to confirm a destructive action using gum confirm.

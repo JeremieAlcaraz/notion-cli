@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/4ier/notion-cli/internal/mode"
+	"github.com/JeremieAlcaraz/notion-cli/internal/mode"
 )
 
 // AskPassword prompts for a masked/hidden input using gum input --password.

@@ -1,6 +1,6 @@
 package tui
 
-import "github.com/4ier/notion-cli/internal/mode"
+import "github.com/JeremieAlcaraz/notion-cli/internal/mode"
 
 // SetAgentMode enables or disables agent mode and implies --no-gum.
 func SetAgentMode(v bool) {

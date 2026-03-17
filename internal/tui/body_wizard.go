@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/4ier/notion-cli/internal/mode"
+	"github.com/JeremieAlcaraz/notion-cli/internal/mode"
 )
 
 // BodyField describes one field of a request body.

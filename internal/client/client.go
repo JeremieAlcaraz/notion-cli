@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/4ier/notion-cli/internal/mode"
-	"github.com/4ier/notion-cli/internal/tui"
+	"github.com/JeremieAlcaraz/notion-cli/internal/mode"
+	"github.com/JeremieAlcaraz/notion-cli/internal/tui"
 )
 
 const (

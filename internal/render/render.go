@@ -6,15 +6,21 @@ import (
 	"os"
 	"strings"
 
-	"github.com/4ier/notion-cli/internal/mode"
-	"github.com/4ier/notion-cli/internal/tui"
+	"github.com/JeremieAlcaraz/notion-cli/internal/mode"
+	"github.com/JeremieAlcaraz/notion-cli/internal/tui"
 	"github.com/fatih/color"
 	"golang.org/x/term"
 )
 
 // OutputFields is like OutputField but also supports --fields (CSV list of keys).
-// Priority: --fields > --field > auto render.
+// Priority: --fields > --field > --format > auto render.
 func OutputFields(data []byte, format, field, fields string) error {
+	if format == "summary" {
+		if stripMeta {
+			data = StripMetaBytes(data)
+		}
+		return Summary(data)
+	}
 	if stripMeta {
 		data = StripMetaBytes(data)
 	}
@@ -118,6 +124,21 @@ func OutputField(data []byte, format, field string) error {
 			fmt.Println(string(out))
 		}
 		return nil
+	}
+
+	// NDJSON mode: one JSON line per item in results[] (takes priority over agent mode)
+	if format == "ndjson" {
+		var obj map[string]interface{}
+		if err := json.Unmarshal(data, &obj); err == nil {
+			if items, ok := obj["results"].([]interface{}); ok {
+				for _, item := range items {
+					line, _ := json.Marshal(item)
+					fmt.Println(string(line))
+				}
+				return nil
+			}
+		}
+		// Not a list — fall through to normal rendering
 	}
 
 	// Agent mode: compact JSON, no color, no tables

@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/4ier/notion-cli/internal/config"
+	"github.com/JeremieAlcaraz/notion-cli/internal/config"
 )
 
 var dryRunMode bool
