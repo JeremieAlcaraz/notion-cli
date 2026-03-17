@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/4ier/notion-cli/internal/client"
+	"github.com/JeremieAlcaraz/notion-cli/internal/client"
 	"github.com/spf13/cobra"
 )
 

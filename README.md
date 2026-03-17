@@ -3,207 +3,154 @@
 </h1>
 
 <p align="center">
-  <b>Like <code>gh</code> for GitHub, but for Notion. 39 commands. One binary.</b>
+  <b>Like <code>gh</code> for GitHub, but for Notion. For humans and AI agents.</b>
 </p>
 
 <p align="center">
-  <img src="https://github.com/4ier/notion-cli/releases/download/v0.2.0/demo.gif" alt="demo" width="640">
-</p>
-
-<p align="center">
-  <a href="https://github.com/4ier/notion-cli/releases"><img src="https://img.shields.io/github/v/release/4ier/notion-cli?style=flat-square" alt="Release"></a>
-  <a href="https://github.com/4ier/notion-cli/actions"><img src="https://img.shields.io/github/actions/workflow/status/4ier/notion-cli/test.yml?style=flat-square&label=tests" alt="Tests"></a>
-  <a href="https://github.com/4ier/notion-cli/blob/main/LICENSE"><img src="https://img.shields.io/github/license/4ier/notion-cli?style=flat-square" alt="License"></a>
-  <a href="https://goreportcard.com/report/github.com/4ier/notion-cli"><img src="https://goreportcard.com/badge/github.com/4ier/notion-cli?style=flat-square" alt="Go Report Card"></a>
+  <a href="https://github.com/JeremieAlcaraz/notion-cli/releases"><img src="https://img.shields.io/github/v/release/JeremieAlcaraz/notion-cli?style=flat-square" alt="Release"></a>
+  <a href="https://github.com/JeremieAlcaraz/notion-cli/actions"><img src="https://img.shields.io/github/actions/workflow/status/JeremieAlcaraz/notion-cli/test.yml?style=flat-square&label=tests" alt="Tests"></a>
+  <a href="https://github.com/JeremieAlcaraz/notion-cli/blob/main/LICENSE"><img src="https://img.shields.io/github/license/JeremieAlcaraz/notion-cli?style=flat-square" alt="License"></a>
 </p>
 
 ---
 
-A full-featured command-line interface for [Notion](https://notion.so). Manage pages, databases, blocks, comments, users, and files — all from your terminal. Built for developers and AI agents who need programmatic access without the browser.
+## Origin & Credits
+
+This project started from [4ier/notion-cli](https://github.com/4ier/notion-cli) — an excellent foundation that covers the entire Notion API in a single binary. Rather than forking, I chose to create an independent repository to pursue a different direction.
+
+All credit for the original design and implementation goes to [@4ier](https://github.com/4ier). If you're looking for a stable, production-ready Notion CLI, check out the original.
+
+The new direction taken in this repo — OpenAPI-driven generation, agent mode, human mode — was developed with [Claude Code](https://claude.ai/claude-code) as the primary coding assistant. Most of the code in this fork was generated through AI-assisted development.
+
+---
+
+## What's different here
+
+This repo takes the original as a starting point and extends it in three directions:
+
+**1. OpenAPI-driven generation**
+Commands are generated from the official `spec/notion-openapi.json` spec. Adding a new Notion endpoint means updating the spec, not writing Go by hand.
+
+**2. Agent mode** — optimized for LLM token consumption
+```sh
+notion --agent pages retrieve-a-page <id>
+```
+Minified JSON output, no colors, no decorative headers. Designed to reduce token usage by 60–90% when used inside AI agents (Claude, Codex, etc.).
+
+**3. Human mode** — interactive UI powered by `gum`
+```sh
+notion --human search
+```
+Interactive prompts, selects, confirmations. Built for terminal users who prefer a guided experience over flags.
+
+---
 
 ## Install
 
 ### Homebrew (macOS/Linux)
 ```sh
-brew install 4ier/tap/notion-cli
+brew install JeremieAlcaraz/tap/notion-cli
 ```
 
 ### Go
 ```sh
-go install github.com/4ier/notion-cli@latest
-```
-
-### npm
-```sh
-npm install -g notion-cli-go
-```
-
-### Scoop (Windows)
-```powershell
-scoop bucket add 4ier https://github.com/4ier/scoop-bucket
-scoop install notion-cli
-```
-
-### Docker
-```sh
-docker run --rm -e NOTION_TOKEN ghcr.io/4ier/notion-cli search "meeting"
+go install github.com/JeremieAlcaraz/notion-cli@latest
 ```
 
 ### Binary
+Download from [GitHub Releases](https://github.com/JeremieAlcaraz/notion-cli/releases) — available for Linux, macOS, and Windows (amd64/arm64).
 
-Download from [GitHub Releases](https://github.com/4ier/notion-cli/releases) — available for Linux, macOS, and Windows (amd64/arm64).
+---
+
+## Install AI skill
+
+Once installed, you can register the CLI skill for your AI agent:
+
+```sh
+notion skill install           # auto-detects Claude, Codex, etc.
+notion skill install --claude  # → ~/.claude/skills/notion-cli/
+notion skill install --codex   # → ~/.codex/skills/notion-cli/
+```
+
+The skill is embedded in the binary and always matches the installed version.
+
+---
 
 ## Quick Start
 
 ```sh
 # Authenticate
-echo "ntn_xxxxx" | notion auth login --with-token
+export NOTION_TOKEN=ntn_xxxxx
 
 # Search your workspace
 notion search "meeting notes"
 
-# Query a database with filters
-notion db query <db-id> --filter 'Status=Done' --sort 'Date:desc'
+# Query a database
+notion databases retrieve-database <db-id>
 
-# Create a page in a database
-notion page create <db-id> --db "Name=Weekly Review" "Status=Todo"
-
-# Read page content as Markdown
-notion block list <page-id> --depth 3 --md
-
-# Append blocks from a Markdown file
-notion block append <page-id> --file notes.md
+# Get page content as Markdown
+notion pages retrieve-page-markdown <page-id>
 
 # Raw API escape hatch
 notion api GET /v1/users/me
 ```
 
+---
+
 ## Commands
 
-| Group | Commands | Description |
-|-------|----------|-------------|
-| **auth** | `login` `logout` `status` `switch` `doctor` | Authentication & diagnostics |
-| **search** | `search` | Search pages and databases |
-| **page** | `view` `list` `create` `delete` `restore` `move` `open` `set` `props` `link` `unlink` | Full page lifecycle |
-| **db** | `list` `view` `query` `create` `update` `add` `add-bulk` `open` | Database CRUD + query |
-| **block** | `list` `get` `append` `insert` `update` `delete` | Content block operations |
-| **comment** | `list` `add` `get` | Discussion threads |
-| **user** | `me` `list` `get` | Workspace members |
-| **file** | `list` `upload` | File management |
-| **api** | `<METHOD> <path>` | Raw API escape hatch |
+```
+pages
+  retrieve-a-page <page_id>
+  post-page --body '<json>'
+  patch-page <page_id> --body '<json>'
+  retrieve-page-markdown <page_id>
+  update-page-markdown <page_id> --body '<json>'
 
-**39 subcommands** covering 100% of the Notion API.
+databases
+  retrieve-database <db_id>
+  create-database --body '<json>'
+  update-database <db_id> --body '<json>'
 
-## Features
+blocks
+  retrieve-a-block <block_id>
+  get-block-children <block_id>
+  patch-block-children <block_id> --body '<json>'
+  update-a-block <block_id> --body '<json>'
+  delete-a-block <block_id>
 
-### Human-Friendly Filters
-No JSON needed for 90% of queries:
-```sh
-notion db query <id> --filter 'Status=Done' --filter 'Priority=High' --sort 'Date:desc'
+search
+  post-search --body '{"query":"..."}'
+
+users
+  get-users
+  retrieve-a-user <user_id>
+  retrieve-your-token-s-bot-user
+
+comments
+  list-comments --block-id <id>
+  create-comment --body '<json>'
+
+skill
+  install [--claude] [--codex]
 ```
 
-For complex queries (OR, nesting), use the JSON escape hatch:
-```sh
-notion db query <id> --filter-json '{"or":[{"property":"Status","status":{"equals":"Done"}},{"property":"Status","status":{"equals":"Cancelled"}}]}'
-```
+---
 
-### Schema-Aware Properties
-Property types are auto-detected from the database schema:
-```sh
-notion page create <db-id> --db "Name=Sprint Review" "Date=2026-03-01" "Points=8" "Done=true"
-```
+## Output flags
 
-### Smart Output
-- **Terminal**: Colored tables, formatted text
-- **Pipe/Script**: Clean JSON for `jq`, scripts, and AI agents
-```sh
-# Pretty table in terminal
-notion db query <id>
+| Flag | Effect |
+|------|--------|
+| `--fields id,url,title` | Keep only listed fields |
+| `--field results` | Extract single top-level field |
+| `--format summary` | Compact: id, type, title, url, parent_id |
+| `--format md` | Render Notion blocks as Markdown |
+| `--format ndjson` | One JSON line per item in results[] |
+| `--strip-meta` | Remove noisy Notion metadata |
+| `--all` | Auto-paginate until has_more=false |
+| `--agent` | Minified JSON, no colors, terse errors |
 
-# JSON when piped
-notion db query <id> | jq '.results[].properties.Name'
-```
-
-### Markdown I/O
-```sh
-# Read blocks as Markdown
-notion block list <page-id> --md --depth 3
-
-# Write Markdown to Notion
-notion block append <page-id> --file document.md
-```
-Supports headings, bullets, numbered lists, todos, quotes, code blocks, and dividers.
-
-### Recursive Block Reading
-```sh
-notion block list <page-id> --depth 5 --all
-```
-
-### URL or ID — Your Choice
-```sh
-# Both work
-notion page view abc123def
-notion page view https://notion.so/My-Page-abc123def456
-```
-
-### Actionable Error Messages
-```
-object_not_found: Could not find page with ID abc123
-  → Check the ID is correct and the page/database is shared with your integration
-```
-
-## For AI Agents
-
-This CLI is designed to be agent-friendly:
-- **JSON output** when piped — no parsing needed
-- **Schema-aware** — agents don't need to know property types
-- **URL resolution** — paste Notion URLs directly
-- **Single binary** — no runtime dependencies
-- **Exit codes** — 0 for success, non-zero for errors
-
-Install as an agent skill:
-```sh
-npx skills add 4ier/notion-cli
-```
-
-## Configuration
-
-```sh
-# Token is stored in ~/.config/notion-cli/config.json (mode 0600)
-echo "ntn_xxxxx" | notion auth login --with-token
-
-# Or use environment variable
-export NOTION_TOKEN=ntn_xxxxx
-
-# Check authentication
-notion auth status
-notion auth doctor
-```
-
-## Troubleshooting
-
-### Windows: MSYS / Git Bash path mangling
-
-In MSYS-based shells (Git Bash, MSYS2), arguments starting with `/` are silently rewritten to Windows paths. This breaks API path arguments:
-
-```sh
-# ✗ /v1/users/me becomes C:/Program Files/Git/v1/users/me
-notion api GET /v1/users/me
-```
-
-**Fix:** disable MSYS path conversion:
-
-```sh
-MSYS_NO_PATHCONV=1 notion api GET /v1/users/me
-```
-
-Or export it for the session: `export MSYS_NO_PATHCONV=1`
-
-> This is a shell-level issue, not a bug in notion-cli. PowerShell and cmd.exe are not affected.
-
-## Contributing
-
-Issues and PRs welcome at [github.com/4ier/notion-cli](https://github.com/4ier/notion-cli).
+---
 
 ## License
 

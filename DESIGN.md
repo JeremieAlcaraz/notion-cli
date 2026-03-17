@@ -202,7 +202,33 @@ Last edited: 2 hours ago by @alice
 - Shell completions
 - Local caching
 
-## Notion API → CLI Mapping
+## API Coverage (OpenAPI-driven)
+
+> **All commands are generated from the official Notion OpenAPI spec (`spec/notion-openapi.json`).**
+> To add or update commands: `just update-spec && just generate`.
+> No manual code changes required when Notion releases new endpoints.
+
+The CLI covers **all 32 public operations** across 8 resource groups (OAuth excluded — token-based auth only).
+The previous hand-written version covered ~15 endpoints. The generated version is a strict superset.
+
+| Tag | Endpoints | Notes |
+|---|---|---|
+| **Pages** | retrieve, create, update, move, get-property, get-markdown, patch-markdown | `get-markdown` / `patch-markdown` are new |
+| **Blocks** | get, update, delete, list-children, append-children | Full parity |
+| **Databases** | retrieve, create, update | Schema management |
+| **Data sources** | retrieve, update, query, create, list-templates | New in API v2025-09-03 |
+| **Users** | me, get, list | Full parity |
+| **Comments** | list, get, create | Full parity |
+| **File uploads** | list, get, create, send, complete | `complete` endpoint is new |
+| **Search** | search | Full parity |
+
+The only limit is what Notion exposes in their public spec. Private/undocumented endpoints
+are not covered — identical to the previous hand-written approach.
+
+## Notion API → CLI Mapping (legacy reference)
+
+> The table below is kept for historical reference.
+> The authoritative mapping is now the OpenAPI spec + generator.
 
 | API Endpoint | CLI Command |
 |---|---|

@@ -6,13 +6,196 @@ import (
 	"os"
 	"strings"
 
+	"github.com/JeremieAlcaraz/notion-cli/internal/mode"
+	"github.com/JeremieAlcaraz/notion-cli/internal/tui"
 	"github.com/fatih/color"
 	"golang.org/x/term"
 )
 
+// OutputFields is like OutputField but also supports --fields (CSV list of keys).
+// Priority: --fields > --field > --format > auto render.
+func OutputFields(data []byte, format, field, fields string) error {
+	if format == "summary" {
+		if stripMeta {
+			data = StripMetaBytes(data)
+		}
+		return Summary(data)
+	}
+	if stripMeta {
+		data = StripMetaBytes(data)
+	}
+	if fields != "" {
+		keys := strings.Split(fields, ",")
+		for i, k := range keys {
+			keys[i] = strings.TrimSpace(k)
+		}
+
+		var raw interface{}
+		if err := json.Unmarshal(data, &raw); err != nil {
+			return fmt.Errorf("parse response: %w", err)
+		}
+
+		var result interface{}
+
+		// If the response is a list wrapper {"object":"list","results":[...]},
+		// apply --fields to each item in results[].
+		if obj, ok := raw.(map[string]interface{}); ok {
+			if obj["object"] == "list" {
+				if items, ok := obj["results"].([]interface{}); ok {
+					filtered := make([]interface{}, 0, len(items))
+					for _, item := range items {
+						if m, ok := item.(map[string]interface{}); ok {
+							picked := make(map[string]interface{}, len(keys))
+							for _, k := range keys {
+								if v, ok := m[k]; ok {
+									picked[k] = v
+								}
+							}
+							filtered = append(filtered, picked)
+						}
+					}
+					result = filtered
+				}
+			}
+		}
+
+		// Fallback: single object field picking
+		if result == nil {
+			if obj, ok := raw.(map[string]interface{}); ok {
+				picked := make(map[string]interface{}, len(keys))
+				for _, k := range keys {
+					if v, ok := obj[k]; ok {
+						picked[k] = v
+					}
+				}
+				result = picked
+			} else {
+				result = raw
+			}
+		}
+
+		var out []byte
+		var err error
+		if mode.IsAgent() {
+			out, err = json.Marshal(result)
+		} else {
+			out, err = json.MarshalIndent(result, "", "  ")
+		}
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(out))
+		return nil
+	}
+	return OutputField(data, format, field)
+}
+
 // IsTTY returns true if stdout is a terminal.
 func IsTTY() bool {
 	return term.IsTerminal(int(os.Stdout.Fd()))
+}
+
+// Output prints raw API response bytes in the requested format.
+// Used by generated commands that receive []byte from client.Get/Post/Patch/Delete.
+func Output(data []byte, format string) error {
+	return OutputField(data, format, "")
+}
+
+// OutputField is like Output but extracts a single top-level field when field != "".
+func OutputField(data []byte, format, field string) error {
+	if stripMeta {
+		data = StripMetaBytes(data)
+	}
+	// If --field is set, extract the top-level field and print its value raw.
+	if field != "" {
+		var obj map[string]interface{}
+		if err := json.Unmarshal(data, &obj); err != nil {
+			return fmt.Errorf("parse response: %w", err)
+		}
+		val, ok := obj[field]
+		if !ok {
+			return fmt.Errorf("field %q not found in response", field)
+		}
+		switch v := val.(type) {
+		case string:
+			fmt.Println(v)
+		default:
+			out, _ := json.MarshalIndent(v, "", "  ")
+			fmt.Println(string(out))
+		}
+		return nil
+	}
+
+	// NDJSON mode: one JSON line per item in results[] (takes priority over agent mode)
+	if format == "ndjson" {
+		var obj map[string]interface{}
+		if err := json.Unmarshal(data, &obj); err == nil {
+			if items, ok := obj["results"].([]interface{}); ok {
+				for _, item := range items {
+					line, _ := json.Marshal(item)
+					fmt.Println(string(line))
+				}
+				return nil
+			}
+		}
+		// Not a list — fall through to normal rendering
+	}
+
+	// Agent mode: compact JSON, no color, no tables
+	if mode.IsAgent() {
+		var v interface{}
+		if err := json.Unmarshal(data, &v); err != nil {
+			fmt.Print(string(data))
+			return nil
+		}
+		out, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		fmt.Print(string(out))
+		return nil
+	}
+
+	// Markdown mode: convert Notion blocks to Markdown
+	if format == "md" {
+		md, err := BlocksToMarkdown(data)
+		if err == nil {
+			fmt.Println(md)
+			return nil
+		}
+		// Not a blocks response — fall through to normal rendering
+	}
+
+	// Auto mode: try smart rendering first
+	if format == "" {
+		// Lists → gum table
+		if isList(data) && RenderList(data) {
+			return nil
+		}
+		// Single objects → jq colored JSON
+		if IsTTY() {
+			var v interface{}
+			if err := json.Unmarshal(data, &v); err == nil {
+				out, err := json.MarshalIndent(v, "", "  ")
+				if err == nil && tui.ColorJSON(out) {
+					return nil
+				}
+			}
+		}
+		format = "json"
+	}
+
+	var v interface{}
+	if err := json.Unmarshal(data, &v); err != nil {
+		fmt.Println(string(data))
+		return nil
+	}
+	out, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(out))
+	return nil
 }
 
 // JSON outputs data as formatted JSON.

@@ -15,6 +15,9 @@ Thumbs.db
 # Test
 coverage.out
 
+# Local assets (not for version control)
+img-to-send/
+
 # Agent skill install dirs (created by npx skills add)
 .adal/
 .agent/
@@ -47,3 +50,10 @@ coverage.out
 .vibe/
 .windsurf/
 .zencoder/
+bench/.venv/
+bench/results/raw/
+bench/results/tokens.csv
+bench/results/report.md
+bench/results/baseline.csv
+bench/quality/results/
+bench/quality/__pycache__/

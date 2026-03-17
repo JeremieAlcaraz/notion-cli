@@ -4,13 +4,23 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/4ier/notion-cli/internal/config"
+	"github.com/JeremieAlcaraz/notion-cli/cmd/generated"
+	"github.com/JeremieAlcaraz/notion-cli/internal/config"
+	"github.com/JeremieAlcaraz/notion-cli/internal/render"
+	"github.com/JeremieAlcaraz/notion-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
 var (
 	outputFormat string
-	debugMode    bool
+	fieldFilter  string
+	fieldsFilter string
+	debugMode     bool
+	dryRunFlag    bool
+	noGumFlag     bool
+	agentFlag     bool
+	stripMetaFlag bool
+	allFlag       bool
 	// Version is set by goreleaser ldflags
 	Version = "dev"
 )
@@ -22,9 +32,10 @@ var rootCmd = &cobra.Command{
 
 Notion CLI lets you manage pages, databases, blocks, and more
 without leaving your terminal. Built for developers and AI agents.`,
-	Version:       Version,
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	Version:          Version,
+	SilenceUsage:     true,
+	SilenceErrors:    true,
+	TraverseChildren: true,
 }
 
 func Execute() {
@@ -35,18 +46,31 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&outputFormat, "format", "f", "", "Output format: json, md, table, text (default: auto)")
+	rootCmd.PersistentFlags().StringVarP(&outputFormat, "format", "f", "", "Output format: json, md, ndjson, summary (default: auto)")
+	rootCmd.PersistentFlags().StringVar(&fieldFilter, "field", "", "Extract a single top-level field from the JSON response")
+	rootCmd.PersistentFlags().StringVar(&fieldsFilter, "fields", "", "Extract multiple fields as compact JSON, e.g. --fields id,name,url")
 	rootCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "Show HTTP request/response details")
+	rootCmd.PersistentFlags().BoolVar(&dryRunFlag, "dry-run", false, "Print the HTTP request without executing it")
+	rootCmd.PersistentFlags().BoolVar(&noGumFlag, "no-gum", false, "Disable gum TUI enhancements (plain text output)")
+	rootCmd.PersistentFlags().BoolVar(&agentFlag, "agent", false, "Agent mode: minified JSON, no TUI, terse errors (also via NOTION_AGENT=1)")
+	rootCmd.PersistentFlags().BoolVar(&stripMetaFlag, "strip-meta", false, "Remove noisy Notion metadata fields (request_id, cover, icon, created_by...)")
+	rootCmd.PersistentFlags().BoolVar(&allFlag, "all", false, "Fetch all pages automatically (follow next_cursor until has_more=false)")
+
+	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		tui.InitAgentMode()            // check NOTION_AGENT env first
+		tui.SetAgentMode(agentFlag)    // --agent flag overrides
+		tui.SetNoGum(noGumFlag)
+		render.SetStripMeta(stripMetaFlag)
+		generated.SetDryRun(dryRunFlag)
+		generated.SetFetchAll(allFlag)
+		tui.WarnIfMissing()
+	}
 
 	rootCmd.AddCommand(authCmd)
-	rootCmd.AddCommand(searchCmd)
-	rootCmd.AddCommand(pageCmd)
-	rootCmd.AddCommand(dbCmd)
-	rootCmd.AddCommand(blockCmd)
-	rootCmd.AddCommand(userCmd)
 	rootCmd.AddCommand(apiCmd)
-	rootCmd.AddCommand(commentCmd)
-	rootCmd.AddCommand(fileCmd)
+
+	// Generated commands from OpenAPI spec
+	generated.AddTo(rootCmd)
 }
 
 // getToken returns the Notion API token from flag, env, or config file.

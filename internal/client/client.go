@@ -10,11 +10,14 @@ import (
 	"net/textproto"
 	"strings"
 	"time"
+
+	"github.com/JeremieAlcaraz/notion-cli/internal/mode"
+	"github.com/JeremieAlcaraz/notion-cli/internal/tui"
 )
 
 const (
 	BaseURL        = "https://api.notion.com"
-	NotionVersion  = "2022-06-28"
+	NotionVersion  = "2026-03-11"
 	DefaultTimeout = 30 * time.Second
 )
 
@@ -22,6 +25,7 @@ type Client struct {
 	token      string
 	httpClient *http.Client
 	debug      bool
+	dryRun     bool
 }
 
 func New(token string) *Client {
@@ -35,6 +39,10 @@ func New(token string) *Client {
 
 func (c *Client) SetDebug(debug bool) {
 	c.debug = debug
+}
+
+func (c *Client) SetDryRun(dryRun bool) {
+	c.dryRun = dryRun
 }
 
 func (c *Client) do(method, path string, body interface{}) ([]byte, error) {
@@ -60,11 +68,22 @@ func (c *Client) do(method, path string, body interface{}) ([]byte, error) {
 		req.Header.Set("Content-Type", "application/json")
 	}
 
+	if c.dryRun {
+		fmt.Printf("[dry-run] %s %s\n", method, url)
+		if body != nil {
+			data, _ := json.Marshal(body)
+			fmt.Printf("[dry-run] Body: %s\n", string(data))
+		}
+		return nil, nil
+	}
+
 	if c.debug {
 		fmt.Printf("→ %s %s\n", method, url)
 	}
 
+	stopSpinner := tui.StartSpinner(method + " " + path)
 	resp, err := c.httpClient.Do(req)
+	stopSpinner()
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -85,11 +104,17 @@ func (c *Client) do(method, path string, body interface{}) ([]byte, error) {
 			Message string `json:"message"`
 		}
 		if json.Unmarshal(respBody, &apiErr) == nil && apiErr.Message != "" {
-			hint := errorHint(apiErr.Code, apiErr.Message)
+			if mode.IsAgent() {
+				return nil, fmt.Errorf("ERR:%s:%s", apiErr.Code, apiErr.Message)
+			}
+			hint := errorHint(apiErr.Code, apiErr.Message, path)
 			if hint != "" {
 				return nil, fmt.Errorf("%s: %s\n  → %s", apiErr.Code, apiErr.Message, hint)
 			}
 			return nil, fmt.Errorf("%s: %s", apiErr.Code, apiErr.Message)
+		}
+		if mode.IsAgent() {
+			return nil, fmt.Errorf("ERR:http_%d:%s", resp.StatusCode, resp.Status)
 		}
 		return nil, fmt.Errorf("API error: %s", resp.Status)
 	}
@@ -99,6 +124,114 @@ func (c *Client) do(method, path string, body interface{}) ([]byte, error) {
 
 func (c *Client) Get(path string) ([]byte, error) {
 	return c.do("GET", path, nil)
+}
+
+// GetAll fetches all pages of a paginated GET endpoint by following next_cursor.
+// Merges all results[] into a single list response.
+func (c *Client) GetAll(path string) ([]byte, error) {
+	return paginateGET(c, path)
+}
+
+// PostAll fetches all pages of a paginated POST endpoint (e.g. search, db query).
+// body must be a map — start_cursor is injected automatically on each page.
+func (c *Client) PostAll(path string, body map[string]interface{}) ([]byte, error) {
+	return paginatePOST(c, path, body)
+}
+
+func paginateGET(c *Client, basePath string) ([]byte, error) {
+	var allResults []interface{}
+	cursor := ""
+	pagesFetched := 0
+	sep := "?"
+	if strings.Contains(basePath, "?") {
+		sep = "&"
+	}
+
+	for {
+		path := basePath
+		if cursor != "" {
+			path = basePath + sep + "start_cursor=" + cursor
+		}
+		data, err := c.do("GET", path, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		var page map[string]interface{}
+		if err := json.Unmarshal(data, &page); err != nil {
+			return nil, err
+		}
+		pagesFetched++
+
+		if results, ok := page["results"].([]interface{}); ok {
+			allResults = append(allResults, results...)
+		}
+
+		hasMore, _ := page["has_more"].(bool)
+		if !hasMore {
+			break
+		}
+		cursor, _ = page["next_cursor"].(string)
+		if cursor == "" {
+			break
+		}
+	}
+
+	merged := map[string]interface{}{
+		"object":        "list",
+		"results":       allResults,
+		"has_more":      false,
+		"next_cursor":   nil,
+		"pages_fetched": pagesFetched,
+	}
+	return json.Marshal(merged)
+}
+
+func paginatePOST(c *Client, path string, body map[string]interface{}) ([]byte, error) {
+	var allResults []interface{}
+	pagesFetched := 0
+
+	// Work on a copy to avoid mutating the caller's map
+	reqBody := make(map[string]interface{}, len(body))
+	for k, v := range body {
+		reqBody[k] = v
+	}
+
+	for {
+		data, err := c.do("POST", path, reqBody)
+		if err != nil {
+			return nil, err
+		}
+
+		var page map[string]interface{}
+		if err := json.Unmarshal(data, &page); err != nil {
+			return nil, err
+		}
+		pagesFetched++
+
+		if results, ok := page["results"].([]interface{}); ok {
+			allResults = append(allResults, results...)
+		}
+
+		hasMore, _ := page["has_more"].(bool)
+		if !hasMore {
+			break
+		}
+		cursor, _ := page["next_cursor"].(string)
+		if cursor == "" {
+			break
+		}
+		reqBody["start_cursor"] = cursor
+	}
+
+	merged := map[string]interface{}{
+		"object":        "list",
+		"results":       allResults,
+		"has_more":      false,
+		"next_cursor":   nil,
+		"pages_fetched": pagesFetched,
+	}
+	return json.Marshal(merged)
 }
 
 func (c *Client) Post(path string, body interface{}) ([]byte, error) {
@@ -293,7 +426,7 @@ func (c *Client) UploadFileContent(uploadID, fileName, contentType string, fileB
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	partHeader := make(textproto.MIMEHeader)
-	partHeader.Set("Content-Disposition", multipart.FileContentDisposition("file", fileName))
+	partHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file"; filename="%s"`, fileName))
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
@@ -345,9 +478,13 @@ func (c *Client) UploadFileContent(uploadID, fileName, contentType string, fileB
 }
 
 // errorHint provides actionable suggestions for common API errors.
-func errorHint(code, message string) string {
+func errorHint(code, message, path string) string {
 	switch code {
 	case "object_not_found":
+		if strings.Contains(path, "/v1/data_sources") {
+			return "For data-sources commands, use a data_source_id (not a database_id).\n" +
+				"  Run: notion search post-search --body '{\"filter\":{\"value\":\"data_source\",\"property\":\"object\"}}' to list them"
+		}
 		return "Check the ID is correct and the page/database is shared with your integration"
 	case "unauthorized":
 		return "Run 'notion auth login' to authenticate, or check your token"
