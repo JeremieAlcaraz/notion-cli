@@ -18,7 +18,7 @@ builds:
       - amd64
       - arm64
     ldflags:
-      - -s -w -X github.com/4ier/notion-cli/cmd.Version={{.Version}}
+      - -s -w -X github.com/JeremieAlcaraz/notion-cli/cmd.Version={{.Version}}
     binary: notion
 
 archives:
@@ -43,52 +43,17 @@ changelog:
 
 brews:
   - repository:
-      owner: 4ier
+      owner: JeremieAlcaraz
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    homepage: "https://github.com/4ier/notion-cli"
-    description: "Full-featured CLI for Notion. Like gh for GitHub, but for Notion."
-
-scoops:
-  - repository:
-      owner: 4ier
-      name: scoop-bucket
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    homepage: "https://github.com/4ier/notion-cli"
-    description: "Full-featured CLI for Notion. Like gh for GitHub, but for Notion."
+    homepage: "https://github.com/JeremieAlcaraz/notion-cli"
+    description: "Notion CLI for humans and AI agents — optimized token consumption."
     license: "MIT"
-
-nfpms:
-  - homepage: "https://github.com/4ier/notion-cli"
-    maintainer: "Fourier <yang.fourier@gmail.com>"
-    description: "Full-featured CLI for Notion. Like gh for GitHub, but for Notion."
-    license: "MIT"
-    formats:
-      - deb
-      - rpm
-
-dockers:
-  - image_templates:
-      - "ghcr.io/4ier/notion-cli:{{ .Version }}-amd64"
-    use: buildx
-    build_flag_templates:
-      - "--platform=linux/amd64"
-    goarch: amd64
-
-  - image_templates:
-      - "ghcr.io/4ier/notion-cli:{{ .Version }}-arm64"
-    use: buildx
-    build_flag_templates:
-      - "--platform=linux/arm64"
-    goarch: arm64
-
-docker_manifests:
-  - name_template: "ghcr.io/4ier/notion-cli:{{ .Version }}"
-    image_templates:
-      - "ghcr.io/4ier/notion-cli:{{ .Version }}-amd64"
-      - "ghcr.io/4ier/notion-cli:{{ .Version }}-arm64"
-
-  - name_template: "ghcr.io/4ier/notion-cli:latest"
-    image_templates:
-      - "ghcr.io/4ier/notion-cli:{{ .Version }}-amd64"
-      - "ghcr.io/4ier/notion-cli:{{ .Version }}-arm64"
+    dependencies:
+      - name: gum
+        type: optional
+    install: |
+      bin.install "notion"
+    post_install: |
+      ohai "Install the AI agent skill:"
+      ohai "  notion skill install"
