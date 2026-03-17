@@ -7,11 +7,11 @@ package generated
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
-
 	"github.com/4ier/notion-cli/internal/client"
 	"github.com/4ier/notion-cli/internal/render"
+	"github.com/4ier/notion-cli/internal/tui"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 // post-page — Create a page
@@ -61,6 +61,27 @@ func newPostPageCmd() *cobra.Command {
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("post-page", []tui.BodyField{
+					{Name: "children", Type: "array", Description: "", Required: false},
+					{Name: "content", Type: "array", Description: "", Required: false},
+					{Name: "cover", Type: "", Description: "", Required: false},
+					{Name: "icon", Type: "", Description: "", Required: false},
+					{Name: "markdown", Type: "string", Description: "Page content as Notion-flavored Markdown. Mutually exclusive with content/children.", Required: false},
+					{Name: "parent", Type: "", Description: "", Required: false},
+					{Name: "position", Type: "", Description: "", Required: false},
+					{Name: "properties", Type: "object", Description: "", Required: false},
+					{Name: "template", Type: "", Description: "", Required: false},
+				})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
+				}
 			}
 			data, err := c.Post(path, bodyData)
 			if err != nil {
@@ -72,7 +93,8 @@ func newPostPageCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
@@ -89,12 +111,7 @@ func newRetrieveAPageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-a-page <page_id>",
 		Short: "Retrieve a page",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -102,6 +119,18 @@ func newRetrieveAPageCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("page_id: ", "Enter page_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: page_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/pages/{page_id}"
@@ -119,7 +148,12 @@ func newRetrieveAPageCmd() *cobra.Command {
 			}
 
 			// Execute request
-			data, err := c.Get(path)
+			var data []byte
+			if fetchAll && "GET" == "GET" {
+				data, err = c.GetAll(path)
+			} else {
+				data, err = c.Get(path)
+			}
 			if err != nil {
 				return err
 			}
@@ -129,7 +163,8 @@ func newRetrieveAPageCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&flagFilterProperties, "filter-properties", "", "Supply a list of property IDs to filter properties in the response. Note that if a page doesn't have a property, it won't be included in the filtered response.")
@@ -145,12 +180,7 @@ func newPatchPageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "patch-page <page_id>",
 		Short: "Update page",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
 				fmt.Println("Example --body JSON for patch-page:")
@@ -171,6 +201,18 @@ func newPatchPageCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("page_id: ", "Enter page_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: page_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/pages/{page_id}"
@@ -188,6 +230,25 @@ func newPatchPageCmd() *cobra.Command {
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("patch-page", []tui.BodyField{
+					{Name: "cover", Type: "", Description: "", Required: false},
+					{Name: "erase_content", Type: "boolean", Description: "Whether to erase all existing content from the page. When used with a template, the template content replaces the existing content. When used without a template, simply clears the page content.", Required: false},
+					{Name: "icon", Type: "", Description: "", Required: false},
+					{Name: "in_trash", Type: "boolean", Description: "", Required: false},
+					{Name: "is_locked", Type: "boolean", Description: "Whether the page should be locked from editing in the Notion app UI. If not provided, the locked state will not be updated.", Required: false},
+					{Name: "properties", Type: "object", Description: "", Required: false},
+					{Name: "template", Type: "", Description: "", Required: false},
+				})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
+				}
 			}
 			data, err := c.Patch(path, bodyData)
 			if err != nil {
@@ -199,7 +260,8 @@ func newPatchPageCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
@@ -216,12 +278,7 @@ func newRetrievePageMarkdownCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-page-markdown <page_id>",
 		Short: "Retrieve a page as markdown",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -229,6 +286,18 @@ func newRetrievePageMarkdownCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("page_id: ", "Enter page_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: page_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/pages/{page_id}/markdown"
@@ -246,7 +315,12 @@ func newRetrievePageMarkdownCmd() *cobra.Command {
 			}
 
 			// Execute request
-			data, err := c.Get(path)
+			var data []byte
+			if fetchAll && "GET" == "GET" {
+				data, err = c.GetAll(path)
+			} else {
+				data, err = c.Get(path)
+			}
 			if err != nil {
 				return err
 			}
@@ -256,7 +330,8 @@ func newRetrievePageMarkdownCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&flagIncludeTranscript, "include-transcript", "", "Whether to include meeting note transcripts. Defaults to false. When true, full transcripts are included; when false, a placeholder with the meeting note URL is shown instead.")
@@ -272,12 +347,7 @@ func newUpdatePageMarkdownCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-page-markdown <page_id>",
 		Short: "Update a page's content as markdown",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
 				fmt.Println("Example --body JSON for update-page-markdown:")
@@ -290,6 +360,18 @@ func newUpdatePageMarkdownCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("page_id: ", "Enter page_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: page_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/pages/{page_id}/markdown"
@@ -307,6 +389,17 @@ func newUpdatePageMarkdownCmd() *cobra.Command {
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("update-page-markdown", []tui.BodyField{})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
+				}
 			}
 			data, err := c.Patch(path, bodyData)
 			if err != nil {
@@ -318,7 +411,8 @@ func newUpdatePageMarkdownCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
@@ -335,12 +429,7 @@ func newMovePageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "move-page <page_id>",
 		Short: "Move a page",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(1)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
 				fmt.Println("Example --body JSON for move-page:")
@@ -355,6 +444,18 @@ func newMovePageCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("page_id: ", "Enter page_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: page_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/pages/{page_id}/move"
@@ -372,6 +473,19 @@ func newMovePageCmd() *cobra.Command {
 				if err := json.Unmarshal([]byte(resolved), &bodyData); err != nil {
 					return fmt.Errorf("invalid JSON body: %w", err)
 				}
+			} else {
+				// No --body: prompt field by field if gum is available
+				wizardJSON, err := tui.AskBody("move-page", []tui.BodyField{
+					{Name: "parent", Type: "", Description: "The new parent of the page.", Required: true},
+				})
+				if err != nil {
+					return err
+				}
+				if wizardJSON != "" && wizardJSON != "{}" {
+					if err := json.Unmarshal([]byte(wizardJSON), &bodyData); err != nil {
+						return fmt.Errorf("invalid wizard JSON: %w", err)
+					}
+				}
 			}
 			data, err := c.Post(path, bodyData)
 			if err != nil {
@@ -383,7 +497,8 @@ func newMovePageCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&body, "body", "", "JSON request body (use @file.json to read from file, - for stdin)")
@@ -401,12 +516,7 @@ func newRetrieveAPagePropertyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "retrieve-a-page-property <page_id> <property_id>",
 		Short: "Retrieve a page property item",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if helpBody, _ := cmd.Flags().GetBool("help-body"); helpBody {
-				return nil
-			}
-			return cobra.ExactArgs(2)(cmd, args)
-		},
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, err := GetToken()
 			if err != nil {
@@ -414,6 +524,30 @@ func newRetrieveAPagePropertyCmd() *cobra.Command {
 			}
 			c := client.New(token)
 			c.SetDryRun(dryRunMode)
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 0 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("page_id: ", "Enter page_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: page_id")
+				}
+			}
+			// Prompt for missing path param if gum is available, else error
+			if len(args) <= 1 {
+				if tui.IsAvailable() {
+					val, err := tui.AskInput("property_id: ", "Enter property_id…")
+					if err != nil {
+						return err
+					}
+					args = append(args, val)
+				} else {
+					return fmt.Errorf("missing argument: property_id")
+				}
+			}
 
 			// Build path
 			path := "/v1/pages/{page_id}/properties/{property_id}"
@@ -435,7 +569,12 @@ func newRetrieveAPagePropertyCmd() *cobra.Command {
 			}
 
 			// Execute request
-			data, err := c.Get(path)
+			var data []byte
+			if fetchAll && "GET" == "GET" {
+				data, err = c.GetAll(path)
+			} else {
+				data, err = c.Get(path)
+			}
 			if err != nil {
 				return err
 			}
@@ -445,7 +584,8 @@ func newRetrieveAPagePropertyCmd() *cobra.Command {
 
 			format, _ := cmd.Flags().GetString("format")
 			field, _ := cmd.Flags().GetString("field")
-			return render.OutputField(data, format, field)
+			fields, _ := cmd.Flags().GetString("fields")
+			return render.OutputFields(data, format, field, fields)
 		},
 	}
 	cmd.Flags().StringVar(&flagStartCursor, "start-cursor", "", "")

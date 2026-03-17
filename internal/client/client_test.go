@@ -37,7 +37,7 @@ func TestErrorHint(t *testing.T) {
 	for i, tt := range tests {
 		name := fmt.Sprintf("%d_%s", i, tt.code)
 		t.Run(name, func(t *testing.T) {
-			hint := errorHint(tt.code, tt.message)
+			hint := errorHint(tt.code, tt.message, "")
 			if tt.wantHas == "" {
 				if hint != "" {
 					t.Errorf("expected empty hint, got %q", hint)

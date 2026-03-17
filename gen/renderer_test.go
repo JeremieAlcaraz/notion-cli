@@ -127,9 +127,9 @@ func TestRenderCommandFile_PatchWithPathParam(t *testing.T) {
 	if !strings.Contains(out, `strings.ReplaceAll(path, "{page_id}", args[0])`) {
 		t.Error("expected path param substitution")
 	}
-	// ExactArgs(1) for one path param
-	if !strings.Contains(out, "cobra.ExactArgs(1)") {
-		t.Error("expected cobra.ExactArgs(1)")
+	// ArbitraryArgs used for flexibility with path params
+	if !strings.Contains(out, "cobra.ArbitraryArgs") {
+		t.Error("expected cobra.ArbitraryArgs")
 	}
 }
 
