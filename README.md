@@ -20,6 +20,8 @@ This project started from [4ier/notion-cli](https://github.com/4ier/notion-cli) 
 
 All credit for the original design and implementation goes to [@4ier](https://github.com/4ier). If you're looking for a stable, production-ready Notion CLI, check out the original.
 
+The new direction taken in this repo — OpenAPI-driven generation, agent mode, human mode — was developed with [Claude Code](https://claude.ai/claude-code) as the primary coding assistant. Most of the code in this fork was generated through AI-assisted development.
+
 ---
 
 ## What's different here
