@@ -1,166 +1,126 @@
 ---
 name: notion-cli
-description: |
-  Work with Notion from the terminal using the `notion` CLI. Use when the user needs to read, create, update, query, or manage Notion pages, databases, blocks, comments, users, or files programmatically. Covers the entire Notion API with 44 commands. Triggers: Notion workspace automation, database queries, page creation, block manipulation, comment threads, file uploads, relation management, database export, multi-workspace management, or any Notion API interaction from the command line.
+description: Work with Notion from the terminal using the `notion` CLI. Use when the user needs to read, create, update, query, or manage Notion pages, databases, blocks, comments, users, or files programmatically. Covers the entire Notion API with 44 commands. Triggers: Notion workspace automation, database queries, page creation, block manipulation, comment threads, file uploads, relation management, database export, multi-workspace management, or any Notion API interaction from the command line.
 ---
 
-# Notion CLI
+# notion-cli
 
-`notion` is a CLI for the Notion API. Single Go binary, full API coverage, dual output (pretty tables for humans, JSON for agents).
+Notion CLI — full Notion API from the terminal. Built for agents: compact output, composable flags.
 
-## Install
+## Binary
+
+Installed globally via brew or `go install`. Use:
+```bash
+notion <command>
+```
+
+Auth via `NOTION_TOKEN` env var (already set if available).
+
+## Agent mode (ALWAYS use this)
 
 ```bash
-# Homebrew
-brew install 4ier/tap/notion-cli
-
-# Go
-go install github.com/4ier/notion-cli@latest
-
-# npm
-npm install -g notion-cli-go
-
-# Or download binary from GitHub Releases
-# https://github.com/4ier/notion-cli/releases
+NOTION_AGENT=1 notion <command>
+# or
+notion --agent <command>
 ```
 
-## Auth
+Agent mode: minified JSON, no TUI prompts, terse errors. **Always use it.**
+
+## Commands
+
+```
+pages
+  retrieve-a-page <page_id>
+  post-page --body '<json>'
+  patch-page <page_id> --body '<json>'
+  move-page <page_id> --body '<json>'
+  retrieve-page-markdown <page_id>
+  update-page-markdown <page_id> --body '<json>'
+
+databases
+  retrieve-database <db_id>
+  create-database --body '<json>'
+  update-database <db_id> --body '<json>'
+
+blocks
+  retrieve-a-block <block_id>
+  get-block-children <block_id>
+  patch-block-children <block_id> --body '<json>'
+  update-a-block <block_id> --body '<json>'
+  delete-a-block <block_id>
+
+search
+  post-search --body '{"query":"..."}'
+
+users
+  get-users
+  retrieve-a-user <user_id>
+  retrieve-your-token-s-bot-user
+
+comments
+  list-comments --block-id <id>
+  create-comment --body '<json>'
+```
+
+## Output flags (token-saving)
+
+| Flag | Effect |
+|------|--------|
+| `--fields id,url,title` | Keep only listed fields (on each item for lists) |
+| `--field results` | Extract single top-level field |
+| `--format summary` | Compact: id, type, title, url, parent_id only |
+| `--format md` | Render Notion blocks as Markdown |
+| `--format ndjson` | One JSON line per item in results[] |
+| `--strip-meta` | Remove request_id, created_by, last_edited_by, public_url, false flags |
+| `--all` | Auto-paginate until has_more=false |
+
+**Recommended for agents:** `--agent --strip-meta --fields id,url` (reduces tokens 60–90%)
+
+## Body for POST/PATCH
 
 ```bash
-notion auth login --with-token <<< "ntn_xxxxxxxxxxxxx"   # or interactive
-notion auth login --with-token --profile work <<< "ntn_xxx"  # save as named profile
-export NOTION_TOKEN=ntn_xxxxxxxxxxxxx                     # env var alternative
-notion auth status                                        # show current profile
-notion auth switch                                        # interactive profile picker
-notion auth switch work                                   # switch to named profile
-notion auth doctor                                        # health check
+# Inline JSON
+notion --agent pages post-page --body '{"parent":{"page_id":"<id>"},"properties":{"title":{"title":[{"text":{"content":"My page"}}]}}}'
+
+# From file
+notion --agent pages patch-page <id> --body @update.json
+
+# See example body
+notionpages post-page --help-body
 ```
 
-## Command Reference
+## Common patterns
 
-### Search
 ```bash
-notion search "query"                    # search everything
-notion search "query" --type page        # pages only
-notion search "query" --type database    # databases only
+# Find a page by title
+notion --agent search post-search --body '{"query":"My Page"}' --fields id,url
+
+# Get page content as Markdown
+notion --agent pages retrieve-page-markdown <page_id>
+
+# List all database items (auto-paginate)
+notion --agent databases retrieve-database <db_id> --all --strip-meta
+
+# Create a page under a parent
+notion --agent pages post-page --body '{"parent":{"page_id":"<parent_id>"},"properties":{"title":{"title":[{"text":{"content":"Title"}}]}}}'
+
+# Append blocks to a page
+notion --agent blocks patch-block-children <page_id> --body '{"children":[{"object":"block","type":"paragraph","paragraph":{"rich_text":[{"type":"text","text":{"content":"Hello"}}]}}]}'
+
+# Summary of search results
+notion --agent search post-search --body '{"query":"report"}' --format summary
 ```
 
-### Pages
-```bash
-notion page view <id|url>                # render page content
-notion page list                         # list workspace pages
-notion page create <parent> --title "X" --body "content"
-notion page create <db-id> --db "Name=Review" "Status=Todo"  # database row
-notion page delete <id>                  # archive page
-notion page restore <id>                 # unarchive page
-notion page move <id> --to <parent>
-notion page open <id>                    # open in browser
-notion page edit <id|url>                # edit in $EDITOR (Markdown round-trip)
-notion page edit <id> --editor nano      # specify editor
-notion page set <id> Key=Value ...       # set properties (type-aware)
-notion page props <id>                   # show all properties
-notion page props <id> <prop-id>         # get specific property
-notion page link <id> --prop "Rel" --to <target-id>    # add relation
-notion page unlink <id> --prop "Rel" --from <target-id> # remove relation
-```
+## IDs
 
-### Databases
-```bash
-notion db list                           # list databases
-notion db view <id>                      # show schema
-notion db query <id>                     # query all rows
-notion db query <id> -F 'Status=Done' -s 'Date:desc'  # filter + sort
-notion db query <id> --filter-json '{"or":[...]}'     # complex JSON filter
-notion db query <id> --all               # fetch all pages
-notion db create <parent> --title "X" --props "Status:select,Date:date"
-notion db update <id> --title "New Name" --add-prop "Priority:select"
-notion db add <id> "Name=Task" "Status=Todo" "Priority=High"
-notion db add-bulk <id> --file items.json              # bulk create from JSON
-notion db export <id>                    # export all rows as CSV (default)
-notion db export <id> --format json      # export as JSON
-notion db export <id> --format md -o report.md  # export as Markdown table to file
-notion db open <id>                      # open in browser
-```
+Notion IDs are UUIDs. Both formats work:
+- `32445368-aa31-80da-ad1a-f9d92a4737a0`
+- `32445368aa3180daad1af9d92a4737a0`
 
-#### Filter operators
-| Syntax | Meaning |
-|--------|---------|
-| `=` | equals |
-| `!=` | not equals |
-| `>` / `>=` | greater than (or equal) |
-| `<` / `<=` | less than (or equal) |
-| `~=` | contains |
+Extract from a URL: `https://notion.so/Page-Title-<id-without-dashes>`
 
-Multiple `-F` flags combine with AND. Property types are auto-detected from schema.
+## Errors
 
-#### Sort: `-s 'Date:desc'` or `-s 'Name:asc'`
-
-#### Bulk add file format
-```json
-[{"Name": "Task A", "Status": "Todo"}, {"Name": "Task B", "Status": "Done"}]
-```
-
-### Blocks
-```bash
-notion block list <parent-id>            # list child blocks
-notion block list <parent-id> --all      # paginate through all
-notion block list <parent-id> --depth 3  # recursive nested blocks
-notion block list <parent-id> --md       # output as Markdown
-notion block get <id>                    # get single block
-notion block append <parent> "text"      # append paragraph
-notion block append <parent> "text" -t bullet          # bullet point
-notion block append <parent> "text" -t code --lang go  # code block
-notion block append <parent> --file notes.md           # from file
-notion block insert <parent> "text" --after <block-id> # positional insert
-notion block update <id> --text "new"    # update content
-notion block delete <id1> [id2] [id3]    # delete one or more
-notion block move <id> --after <target>  # reposition after target block
-notion block move <id> --before <target> # reposition before target block
-notion block move <id> --parent <new-parent>  # move to different parent
-```
-
-Block types: `paragraph`/`p`, `h1`, `h2`, `h3`, `bullet`, `numbered`, `todo`, `quote`, `code`, `callout`, `divider`
-
-### Comments
-```bash
-notion comment list <page-id>
-notion comment add <page-id> "comment text"
-notion comment get <comment-id>
-notion comment reply <comment-id> "reply text"  # reply in same thread
-```
-
-### Users
-```bash
-notion user me                           # current bot info
-notion user list                         # all workspace users
-notion user get <user-id>
-```
-
-### Files
-```bash
-notion file list                         # list uploads
-notion file upload ./path/to/file        # upload (auto MIME detection)
-```
-
-### Raw API (escape hatch)
-```bash
-notion api GET /v1/users/me
-notion api POST /v1/search '{"query":"test"}'
-notion api PATCH /v1/pages/<id> '{"archived":true}'
-```
-
-## Output Modes
-
-- **Terminal (TTY)**: colored tables, readable formatting
-- **Piped/scripted**: JSON automatically
-- **Explicit**: `--format json` or `--format table`
-- `--debug`: show HTTP request/response details
-
-All output includes full Notion UUIDs. All commands accept Notion URLs or IDs.
-
-## Tips
-
-- `notion db add` and `notion page set` auto-detect property types from schema
-- Multi-select: `Tags=tag1,tag2,tag3`
-- Checkbox: `Done=true`
-- Pipe to jq: `notion db query <id> -F 'Status=Done' --format json | jq '.results[].id'`
+- `not authenticated` → set `NOTION_TOKEN`
+- `missing argument` → pass the ID as positional arg
+- `invalid JSON body` → validate JSON before passing
